@@ -12,6 +12,9 @@ ini_set('max_execution_time',       0);
 
 require __DIR__.'/RDAP/Server.php';
 
-$server = new RDAP\Server;
+$server = new RDAP\Server(
+    host: '::',
+    port: isset($argv[1]) ? intval($argv[1]) : 8080
+);
 
 $server->start();

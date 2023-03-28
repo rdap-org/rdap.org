@@ -52,4 +52,4 @@ END
 
 EXPOSE 8080
 
-CMD /app/rdapd
+CMD ["/app/rdapd", "8080"]
