@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+
+error_reporting(E_ALL);
+
+ini_set('display_startup_errors',   false);
+ini_set('display_errors',           'off');
+ini_set('log_errors',               true);
+ini_set('error_log',                '/dev/stderr');
+ini_set('memory_limit',             -1);
+ini_set('max_execution_time',       0);
+
+require __DIR__.'/RDAP/Server.php';
+
+$server = new RDAP\Server;
+
+$server->start();
