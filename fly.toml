@@ -10,9 +10,6 @@ processes = []
 [deploy]
   strategy = "rolling"
 
-[experimental]
-  cmd = ["/app/rdapd"]
-
 [http_service]
   internal_port = 8080
   force_https = true
@@ -44,3 +41,13 @@ processes = []
     interval = "15s"
     restart_limit = 4
     timeout = "2s"
+
+[checks]
+  [checks.http_check]
+    port = 80
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 4
+    timeout = "2s"
+	method = "GET"
+	path = "/heartbeat"
