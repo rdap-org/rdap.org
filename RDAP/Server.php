@@ -133,10 +133,19 @@ class Server extends \OpenSwoole\HTTP\Server {
      * this outputs a log line in Combined Log Format
      */
     private function logRequest(Request $request, int $status) : void {
+        if (isset($request->header['x-forwarded-for'])) {
+            $addrs = preg_split('/[ \t]*,[ \t]/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY);
+            $remote_addr = array_shift($addrs);
+
+        } else {
+            $remote_addr = $request->server['remote_addr'];
+
+        }
+
         fprintf(
             $this->STDOUT,
             "%s - - [%s] \"%s %s %s\" %03u 0 \"%s\" \"%s\"\n",
-            $request->server['remote_addr'],
+            $remote_addr,
             gmdate('d/m/Y:h:i:s O'),
             $request->server['request_method'],
             $request->server['request_uri'],
