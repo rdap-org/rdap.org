@@ -85,6 +85,12 @@ class Server extends \OpenSwoole\HTTP\Server {
             //
             $url = 'https://about.rdap.org/';
 
+        } elseif (1 == count($path) && 'heartbeat' == $path[0]) {
+            //
+            // heartbeat request for internal monitoring purposes
+            //
+            return 200;
+
         } elseif (2 != count($path)) {
             //
             // incorrect number of segments
@@ -104,12 +110,15 @@ class Server extends \OpenSwoole\HTTP\Server {
                     default     => $object,
                 };
             } catch (Error $e) {
+                //
+                // object was somehow malformed or unparseable
+                //
                 return 400;
 
             }
 
             //
-            // find the URL for the requested object
+            // look up the URL for the requested object
             //
             $url = match ($type) {
                 'domain'    => $this->domain($object),
@@ -119,9 +128,15 @@ class Server extends \OpenSwoole\HTTP\Server {
                 default     => null,
             };
 
+            //
+            // append type and object to the URL
+            //
             if ($url) $url = implode('/', [$url, $type, $object]);
         }
 
+        //
+        // no URL so we can't offer a redirect
+        //
         if (!$url) return 404;
 
         $response->header('location', $url);
@@ -198,7 +213,7 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     public function loadRegistries() : void {
         try {
-            $this->registries = Registry::loadRegistries();
+            $this->registries = Registry::load();
 
         } catch (Error $e) {
             fwrite($this->STDERR, $e->getMessage()."\n");

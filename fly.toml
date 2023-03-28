@@ -14,20 +14,22 @@ processes = []
   cmd = ["/app/rdapd"]
 
 [http_service]
-  force_https = true
   internal_port = 8080
+  force_https = true
+
   [http_service.concurrency]
+    type = "requests"
     hard_limit = 64
     soft_limit = 128
-    type = "requests"
 
 [[services]]
   internal_port = 8080
   protocol = "tcp"
+
   [services.concurrency]
+    type = "requests"
     hard_limit = 128
     soft_limit = 64
-    type = "requests"
 
   [[services.ports]]
     handlers = ["http"]

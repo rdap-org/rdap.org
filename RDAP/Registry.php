@@ -52,7 +52,7 @@ class Registry {
     }
 
     /**
-     * scan through the registry, passing each resource to the callback $b,
+     * scan through the registry, passing each resource to the callback $cb,
      * and return the corresponding URL to the resource for which the callback
      * returns true
      */
@@ -69,11 +69,15 @@ class Registry {
     }
 
     /**
+     * return an array of registry objects
      * @return array<Registry>
      */
-    public static function loadRegistries() : array {
+    public static function load() : array {
         $mh = curl_multi_init();
 
+        //
+        // create curl handlers for each URL and add them to the multi-handler
+        //
         $handles = [];
         foreach (self::$registryIDs as $key) {
             $ch = curl_init();
@@ -84,11 +88,17 @@ class Registry {
             curl_multi_add_handle($mh, $ch);
         }
 
+        //
+        // execute the curl handles in parallel
+        //
         do {
             $status = curl_multi_exec($mh, $active);
             if ($active) curl_multi_select($mh);
         } while ($active && CURLM_OK == $status);
 
+        //
+        // extract JSON payloads from each curl handle
+        //
         $data = [];
         foreach ($handles as $key => $ch) {
             $data[$key] = curl_multi_getcontent($ch);
