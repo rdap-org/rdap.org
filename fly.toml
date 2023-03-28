@@ -1,0 +1,44 @@
+app = "rdap-bootstrap-server"
+kill_signal = "SIGINT"
+kill_timeout = 5
+primary_region = "lhr"
+processes = []
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  strategy = "rolling"
+
+[experimental]
+  cmd = ["/app/rdapd"]
+
+[http_service]
+  force_https = true
+  internal_port = 8080
+  [http_service.concurrency]
+    hard_limit = 64
+    soft_limit = 128
+    type = "requests"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  [services.concurrency]
+    hard_limit = 128
+    soft_limit = 64
+    type = "requests"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 4
+    timeout = "2s"
