@@ -36,6 +36,13 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     private array $blocked = [];
 
+    private const OK            = 200;
+    private const FOUND         = 302;
+    private const BAD_REQUEST   = 400;
+    private const FORBIDDEN     = 403;
+    private const NOT_FOUND     = 404;
+    private const ERROR         = 500;
+
     public function __construct(string $host='::', int $port=8080, int $mode=self::POOL_MODE, int $sock_type=Constant::SOCK_TCP) {
         parent::__construct($host, $port, $mode, $sock_type);
 
@@ -63,12 +70,12 @@ class Server extends \OpenSwoole\HTTP\Server {
             }
 
             try {
-                $status = ($blocked ? 403 : $this->handleRequest($request, $response));
+                $status = ($blocked ? self::FORBIDDEN : $this->handleRequest($request, $response));
 
             } catch (\Throwable $e) {
                 fwrite($this->STDERR, $e->getMessage()."\n");
 
-                $status = 500;
+                $status = self::ERROR;
 
             } finally {
                 $response->status($status);
@@ -130,13 +137,13 @@ class Server extends \OpenSwoole\HTTP\Server {
             //
             // heartbeat request for internal monitoring purposes
             //
-            return 200;
+            return SELF::OK;
 
         } elseif (2 != count($path)) {
             //
             // incorrect number of segments
             //
-            return 400;
+            return self::BAD_REQUEST;
 
         } else {
             list($type, $object) = $path;
@@ -154,7 +161,7 @@ class Server extends \OpenSwoole\HTTP\Server {
                 //
                 // object was somehow malformed or unparseable
                 //
-                return 400;
+                return self::BAD_REQUEST;
 
             }
 
@@ -178,11 +185,11 @@ class Server extends \OpenSwoole\HTTP\Server {
         //
         // no URL so we can't offer a redirect
         //
-        if (!$url) return 404;
+        if (!$url) return self::NOT_FOUND;
 
         $response->header('location', $url);
 
-        return 302;
+        return self::FOUND;
     }
 
     /**

@@ -29,20 +29,30 @@ class IP implements \Stringable {
      */
     public readonly int $mlen;
 
+    /**
+     * @var int either AF_INET or AF_INET6
+     */
+    public readonly int $family;
+
+    /**
+     * @var int 32 for v4, 128 for v6
+     */
+    public readonly int $len;
+
     public function __construct(string $block) {
         $parts = explode('/', $block, 2);
 
         $ip = inet_pton(array_shift($parts));
         if (false === $ip) throw new Error("Invalid IP address '{$block}'");
 
-        $bits = 8 * strlen($ip);
-
-        $this->mlen     = intval(array_shift($parts) ?? $bits);
         $this->addr     = gmp_import($ip);
+        $this->family   = (4 == strlen($ip) ? AF_INET : AF_INET6);
+        $this->len      = 8 * strlen($ip);
+        $this->mlen     = intval(array_shift($parts) ?? $this->len);
         $this->minAddr  = clone($this->addr);
         $this->maxAddr  = clone($this->addr);
 
-        for ($i = 0 ; $i < $bits - $this->mlen ; $i++) {
+        for ($i = 0 ; $i < $this->len - $this->mlen ; $i++) {
             gmp_clrbit($this->minAddr, $i);
             gmp_setbit($this->maxAddr, $i);
         }
@@ -56,6 +66,10 @@ class IP implements \Stringable {
     }
 
     public function __toString() : string {
-        return sprintf('%s/%u', inet_ntop(gmp_export($this->addr)), $this->mlen);
+        $str = inet_ntop(gmp_export($this->addr));
+
+        if ($this->mlen < $this->len) $str .= '/'.$this->mlen;
+
+        return $str;
     }
 }
