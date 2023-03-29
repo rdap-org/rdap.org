@@ -31,15 +31,39 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     private const registryTTL = 3600;
 
-    function __construct(string $host='::', int $port=8080, int $mode=self::POOL_MODE, int $sock_type=Constant::SOCK_TCP) {
+    /**
+     * array of blocked client addresses
+     */
+    private array $blocked = [];
+
+    public function __construct(string $host='::', int $port=8080, int $mode=self::POOL_MODE, int $sock_type=Constant::SOCK_TCP) {
         parent::__construct($host, $port, $mode, $sock_type);
 
         $this->STDOUT = fopen('php://stdout', 'w');
         $this->STDERR = fopen('php://stderr', 'w');
 
+        $this->blocked = array_map(
+            fn($ip) => new IP($ip),
+            preg_split('/,/', getenv('IP_BLOCK_LIST') ?: '', -1, PREG_SPLIT_NO_EMPTY)
+        );
+
         $this->on('Request', function (Request $request, Response $response) {
+            $response->header('access-control-allow-origin', '*');
+            $response->header('content-type', 'application/rdap+json');
+
             try {
-                $status = $this->handleRequest($request, $response);
+                $peer = $this->getPeer($request);
+
+                $blocked = $this->isBlocked($peer);
+
+            } catch (\Throwable $e) {
+                fwrite($this->STDERR, $e->getMessage()."\n");
+
+                $blocked = false;
+            }
+
+            try {
+                $status = ($blocked ? 403 : $this->handleRequest($request, $response));
 
             } catch (\Throwable $e) {
                 fwrite($this->STDERR, $e->getMessage()."\n");
@@ -51,7 +75,7 @@ class Server extends \OpenSwoole\HTTP\Server {
 
                 $response->end();
 
-                $this->logRequest($request, $status);
+                $this->logRequest($request, $status, $peer);
             }
         });
     }
@@ -66,14 +90,31 @@ class Server extends \OpenSwoole\HTTP\Server {
         return parent::start();
     }
 
+    private function getPeer(Request $request) : IP {
+        if (isset($request->header['x-forwarded-for'])) {
+            $list = preg_split('/[ \t]*,[ \t]*/', trim($request->header['x-forwarded-for']), -1, PREG_SPLIT_NO_EMPTY);
+
+            try {
+                return new IP(array_pop($list));
+
+            } catch (\Throwable $e) {
+                return new IP($request->server['remote_addr']);
+
+            }
+        }
+
+        return new IP($request->server['remote_addr']);
+    }
+
+    private function isBlocked(IP $ip) : bool {
+        foreach ($this->blocked as $block) if ($block->contains($ip)) return true;
+        return false;
+    }
+
     /**
      * handle a request
      */
-    public function handleRequest(Request $request, Response $response) : int {
-
-        $response->header('access-control-allow-origin', '*');
-        $response->header('content-type', 'application/rdap+json');
-
+    private function handleRequest(Request $request, Response $response) : int {
         //
         // split the path into segments
         //
@@ -147,13 +188,11 @@ class Server extends \OpenSwoole\HTTP\Server {
     /**
      * this outputs a log line in Combined Log Format
      */
-    private function logRequest(Request $request, int $status) : void {
-        $xff = $request->header['x-forwarded-for'] ?? null;
-
+    private function logRequest(Request $request, int $status, IP $peer) : void {
         fprintf(
             $this->STDOUT,
             "%s - - [%s] \"%s %s %s\" %03u 0 \"%s\" \"%s\"\n",
-            (isset($xff) ? substr($xff, 0, strpos($xff, ',') ?: null) : $request->server['remote_addr']),
+            strval($peer),
             gmdate('d/m/Y:h:i:s O'),
             $request->server['request_method'],
             $request->server['request_uri'],
@@ -167,21 +206,21 @@ class Server extends \OpenSwoole\HTTP\Server {
     /**
      * get the base URL for the given domain
      */
-    public function domain(string $domain) : ?string {
+    private function domain(string $domain) : ?string {
         return $this->registries['dns']->search(fn($tld) => str_ends_with($domain, '.'.$tld));
     }
 
     /**
      * get the base URL for the given entity
      */
-    public function entity(string $entity) : ?string {
+    private function entity(string $entity) : ?string {
         return $this->registries['object-tags']->search(fn($tag) => str_ends_with($entity, '-'.$tag));
     }
 
     /**
      * get the base URL for the given ASN
      */
-    public function autnum(int $autnum) : ?string {
+    private function autnum(int $autnum) : ?string {
         return $this->registries['asn']->search(function($range) use ($autnum) {
             if (1 == count($range)) {
                 return ($range[0] === $autnum);
@@ -196,7 +235,7 @@ class Server extends \OpenSwoole\HTTP\Server {
     /**
      * get the base URL for the given IP
      */
-    public function ip(IP $ip) : ?string {
+    private function ip(IP $ip) : ?string {
         return $this->registries['ip']->search(fn($range) => $range->contains($ip));
     }
 
@@ -204,7 +243,7 @@ class Server extends \OpenSwoole\HTTP\Server {
      * load the IANA registries. this is called once when the server starts
      * and then periodically as a background job
      */
-    public function loadRegistries() : void {
+    private function loadRegistries() : void {
         try {
             $this->registries = Registry::load();
 
