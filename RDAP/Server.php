@@ -27,12 +27,12 @@ class Server extends \OpenSwoole\HTTP\Server {
     private $STDERR;
 
     /*
-     * how long between refreshses of the registry data (in seconds)
+     * how long between refreshes of the registry data (in seconds)
      */
     private const registryTTL = 3600;
 
     /**
-     * array of blocked client addresses
+     * array of blocked client addresses, which is populated from an environment variable
      */
     private array $blocked = [];
 
@@ -49,42 +49,18 @@ class Server extends \OpenSwoole\HTTP\Server {
         $this->STDOUT = fopen('php://stdout', 'w');
         $this->STDERR = fopen('php://stderr', 'w');
 
+        //
+        // parse the IP_BLOCK_LIST environment variable to get a list of blocked IP addresses
+        //
         $this->blocked = array_map(
-            fn($ip) => new IP($ip),
+            fn($ip) => new IP(trim($ip)),
             preg_split('/,/', getenv('IP_BLOCK_LIST') ?: '', -1, PREG_SPLIT_NO_EMPTY)
         );
 
-        $this->on('Request', function (Request $request, Response $response) {
-            $response->header('access-control-allow-origin', '*');
-            $response->header('content-type', 'application/rdap+json');
-
-            try {
-                $peer = $this->getPeer($request);
-
-                $blocked = $this->isBlocked($peer);
-
-            } catch (\Throwable $e) {
-                fwrite($this->STDERR, $e->getMessage()."\n");
-
-                $blocked = false;
-            }
-
-            try {
-                $status = ($blocked ? self::FORBIDDEN : $this->handleRequest($request, $response));
-
-            } catch (\Throwable $e) {
-                fwrite($this->STDERR, $e->getMessage()."\n");
-
-                $status = self::ERROR;
-
-            } finally {
-                $response->status($status);
-
-                $response->end();
-
-                $this->logRequest($request, $status, $peer);
-            }
-        });
+        //
+        // request handler
+        //
+        $this->on('Request', fn(Request $request, Response $response) => $this->handleRequest($request, $response));
     }
 
     /**
@@ -97,31 +73,42 @@ class Server extends \OpenSwoole\HTTP\Server {
         return parent::start();
     }
 
-    private function getPeer(Request $request) : IP {
-        if (isset($request->header['x-forwarded-for'])) {
-            $list = preg_split('/[ \t]*,[ \t]*/', trim($request->header['x-forwarded-for']), -1, PREG_SPLIT_NO_EMPTY);
+    private function handleRequest(Request $request, Response $response) : void {
+        $response->header('access-control-allow-origin', '*');
+        $response->header('content-type', 'application/rdap+json');
 
-            try {
-                return new IP(array_pop($list));
+        try {
+            $peer = $this->getPeer($request);
 
-            } catch (\Throwable $e) {
-                return new IP($request->server['remote_addr']);
+            $blocked = $this->isBlocked($peer);
 
-            }
+        } catch (\Throwable $e) {
+            fwrite($this->STDERR, $e->getMessage()."\n");
+
+            $blocked = false;
         }
 
-        return new IP($request->server['remote_addr']);
-    }
+        try {
+            $status = ($blocked ? self::FORBIDDEN : $this->generateResponse($request, $response));
 
-    private function isBlocked(IP $ip) : bool {
-        foreach ($this->blocked as $block) if ($block->contains($ip)) return true;
-        return false;
+        } catch (\Throwable $e) {
+            fwrite($this->STDERR, $e->getMessage()."\n");
+
+            $status = self::ERROR;
+
+        } finally {
+            $response->status($status);
+
+            $response->end();
+
+            $this->logRequest($request, $status, $peer);
+        }
     }
 
     /**
      * handle a request
      */
-    private function handleRequest(Request $request, Response $response) : int {
+    private function generateResponse(Request $request, Response $response) : int {
         //
         // split the path into segments
         //
@@ -264,5 +251,37 @@ class Server extends \OpenSwoole\HTTP\Server {
         // schedule a refresh
         //
         $this->after(1000 * self::registryTTL, fn() => $this->loadRegistries());
+    }
+
+    /**
+     * parse the request properties to get the client IP
+     */
+    private function getPeer(Request $request) : IP {
+        if (isset($request->header['fly-client-ip'])) {
+            return new IP($request->header['fly-client-ip']);
+
+        } elseif (isset($request->header['x-forwarded-for'])) {
+            $list = preg_split('/,/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY);
+
+            try {
+                return new IP(trim(array_pop($list)));
+
+            } catch (\Throwable $e) {
+                return new IP($request->server['remote_addr']);
+
+            }
+
+        } else {
+            return new IP($request->server['remote_addr']);
+
+        }
+    }
+
+    /**
+     * check the blocklist for the given IP
+     */
+    private function isBlocked(IP $ip) : bool {
+        foreach ($this->blocked as $block) if ($block->contains($ip)) return true;
+        return false;
     }
 }
