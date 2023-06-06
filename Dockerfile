@@ -49,7 +49,3 @@ find / -maxdepth 1 -type d -empty ! -name tmp -delete
 unlink /tmp/commits.js
 
 END
-
-EXPOSE 8080
-
-CMD ["/app/rdapd", "8080"]
