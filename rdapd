@@ -66,7 +66,7 @@ final class rdapd {
             $fh = fopen($file, 'w');
 
             if (false === $fh) {
-                fprintf(STDERR, "Unable to open {$file} for writing: ".error_get_last())."\n";
+                fprintf(STDERR, "Unable to open %s for writing: %s\n", $file, error_get_last());
                 exit(1);
             }
 
