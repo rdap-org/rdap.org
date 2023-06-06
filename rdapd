@@ -19,7 +19,18 @@ rdapd::main(array_slice($argv, 1));
 final class rdapd {
 
     const SSL_PROTOCOLS = Constant::SSL_TLSv1_3 | Constant::SSL_TLSv1_2 | Constant::SSL_TLSv1_1;
-    const SSL_CIPHERS   = 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305';
+
+    const SSL_CIPHERS = [
+        'ECDHE-ECDSA-AES128-GCM-SHA256',
+        'ECDHE-RSA-AES128-GCM-SHA256',
+        'ECDHE-ECDSA-AES256-GCM-SHA384',
+        'ECDHE-RSA-AES256-GCM-SHA384',
+        'ECDHE-ECDSA-CHACHA20-POLY1305',
+        'ECDHE-RSA-CHACHA20-POLY1305',
+        'DHE-RSA-AES128-GCM-SHA256',
+        'DHE-RSA-AES256-GCM-SHA384',
+        'DHE-RSA-CHACHA20-POLY1305'
+    ];
 
     public static function main(array $argv) {
         $opt = getopt('', [
@@ -67,9 +78,9 @@ final class rdapd {
 
             $server->set([
                 'ssl_protocols' => self::SSL_PROTOCOLS,
-                'ssl_ciphers'   => self::SSL_CIPHERS,
+                'ssl_ciphers'   => implode(':', self::SSL_CIPHERS),
                 'ssl_key_file'  => $file,
-                'ssl_cert_file' => $file
+                'ssl_cert_file' => $file,
             ]);
         }
 
