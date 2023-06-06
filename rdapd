@@ -73,6 +73,12 @@ final class rdapd {
             ]);
         }
 
+        $server->on('Start', function() use ($server) {
+            foreach ($server->ports as $port) {
+                fprintf(STDERR, "now listening on [%s]:%u\n", $port->host, $port->port);
+            }
+        });
+
         $server->start();
     }
 
