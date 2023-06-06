@@ -12,9 +12,89 @@ ini_set('max_execution_time',       0);
 
 require __DIR__.'/RDAP/Server.php';
 
-$server = new RDAP\Server(
-    host: '::',
-    port: isset($argv[1]) ? intval($argv[1]) : 8080
-);
+use OpenSwoole\Constant;
 
-$server->start();
+rdapd::main(array_slice($argv, 1));
+
+final class rdapd {
+
+    const SSL_PROTOCOLS = Constant::SSL_TLSv1_3 | Constant::SSL_TLSv1_2 | Constant::SSL_TLSv1_1;
+    const SSL_CIPHERS   = 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305';
+
+    public static function main(array $argv) {
+        $opt = getopt('', [
+            'help',
+            'addr:',
+            'port:',
+            'tls',
+        ]);
+
+        if (array_key_exists('help', $opt)) {
+            self::help();
+
+        } else {
+            self::start($opt);
+
+        }
+    }
+
+    private static function start(array $opt) {
+        $tls    = array_key_exists('tls', $opt);
+        $addr   = $opt['addr'] ?? '::';
+        $port   = intval($opt['port'] ?? ($tls ? 443 : 8080));
+
+        $server = new RDAP\Server(
+            host:       $addr,
+            port:       $port,
+            sock_type:  ($tls ? Constant::SOCK_TCP | Constant::SSL : Constant::SOCK_TCP),
+        );
+
+        if ($tls) {
+            $file = sys_get_temp_dir().'/server.pem';
+
+            $fh = fopen($file, 'w');
+
+            if (false === $fh) {
+                fprintf(STDERR, "Unable to open {$file} for writing: ".error_get_last())."\n";
+                exit(1);
+            }
+
+            chmod($file, 0400);
+
+            fwrite($fh, getenv('TLS_KEY')."\n".getenv('TLS_CERT')."\n");
+
+            fclose($fh);
+
+            $server->set([
+                'ssl_protocols' => self::SSL_PROTOCOLS,
+                'ssl_ciphers'   => self::SSL_CIPHERS,
+                'ssl_key_file'  => $file,
+                'ssl_cert_file' => $file
+            ]);
+        }
+
+        $server->start();
+    }
+
+    private static function help() {
+        $file = __FILE__;
+        echo <<<END
+Usage: {$file} [OPTIONS]
+
+  --help        show this help
+  --tls         enable TLS
+  --addr=ADDR   specify IP address (default: ::)
+  --port=PORT   specify TCP port (default: 443 when TLS is enabled,
+                8080 otherwise)
+
+If the --tls argument is provided, the key and certificate will be read
+from the TLS_KEY and TLS_CERT environment variables.
+
+END;
+        exit(0);
+    }
+
+    // disallow object instantation
+    private function __construct() {
+    }
+}
