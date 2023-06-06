@@ -4,6 +4,9 @@ kill_timeout 	= 5
 primary_region 	= "lhr"
 processes 		= []
 
+[experimental]
+cmd             = ["/app/rdapd", "--port=443", "--tls"]
+
 [build]
 dockerfile 		= "Dockerfile"
 
@@ -11,8 +14,7 @@ dockerfile 		= "Dockerfile"
 strategy 		= "rolling"
 
 [[services]]
-protocol 		= "tcp"
-internal_port 	= 8080
+internal_port 	= 443
 
 [services.concurrency]
 type 			= "requests"
@@ -20,18 +22,13 @@ hard_limit 		= 512
 soft_limit 		= 128
 
 [[services.ports]]
-handlers 		= ["http"]
-port 			= 80
-
-[[services.ports]]
-handlers 		= ["tls", "http"]
 port 			= 443
 
 [services.http_checks]
 grace_period 	= "60s"
 interval 		= "30s"
-restart_limit 	= 6
 timeout 		= "5s"
+tls_skip_verify = true
 method 			= "get"
 path 			= "/heartbeat"
-protocol 		= "http"
+protocol 		= "https"
