@@ -258,7 +258,11 @@ class Server extends \OpenSwoole\HTTP\Server {
      * parse the request properties to get the client IP
      */
     private function getPeer(Request $request) : IP {
-        if (isset($request->header['fly-client-ip'])) {
+        ​​
+        if (isset($request->header['cf-connecting-ip'])) {
+            return new IP($request->header['cf-connecting-ip']);
+
+        } elseif (isset($request->header['fly-client-ip'])) {
             return new IP($request->header['fly-client-ip']);
 
         } elseif (isset($request->header['x-forwarded-for'])) {
