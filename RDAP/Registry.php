@@ -141,8 +141,8 @@ class Registry {
                     };
 
                     //
-                    // remove any trailing slashes from the URL (just so the URL construction)
-                    // in handleRequest() looks cleaner
+                    // remove any trailing slashes from the URL (just so the URL construction
+                    // in handleRequest() looks cleaner)
                     //
                     $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
 
