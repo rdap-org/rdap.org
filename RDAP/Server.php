@@ -2,7 +2,7 @@
 
 namespace RDAP;
 
-foreach (glob(__DIR__.'/{Registry,Error,IP}.php', GLOB_BRACE) as $f) require_once $f;
+foreach (glob(__DIR__.'/{Registry,Error,IP}.php', GLOB_BRACE) ?: [] as $f) require_once $f;
 
 use OpenSwoole\HTTP\{Request,Response};
 use OpenSwoole\Constant;
