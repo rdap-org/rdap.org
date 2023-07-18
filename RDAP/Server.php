@@ -56,7 +56,7 @@ class Server extends \OpenSwoole\HTTP\Server {
         //
         $this->blocked = array_map(
             fn($ip) => new IP(trim($ip)),
-            preg_split('/,/', getenv('IP_BLOCK_LIST') ?: '', -1, PREG_SPLIT_NO_EMPTY)
+            preg_split('/,/', getenv('IP_BLOCK_LIST') ?: '', -1, PREG_SPLIT_NO_EMPTY) ?: []
         );
 
         //
