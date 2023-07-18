@@ -270,7 +270,7 @@ class Server extends \OpenSwoole\HTTP\Server {
             $list = preg_split('/,/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
             try {
-                return new IP(trim(array_pop($list)));
+                return new IP(trim((string)array_pop($list)));
 
             } catch (\Throwable $e) {
                 return new IP($request->server['remote_addr']);
