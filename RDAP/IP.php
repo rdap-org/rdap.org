@@ -70,6 +70,6 @@ class IP implements \Stringable {
 
         if ($this->mlen < $this->len) $str .= '/'.$this->mlen;
 
-        return $str;
+        return (string)$str;
     }
 }
