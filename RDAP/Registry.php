@@ -73,43 +73,13 @@ class Registry {
      * @return array<Registry>
      */
     public static function load() : array {
-        $mh = curl_multi_init();
-
-        //
-        // create curl handlers for each URL and add them to the multi-handler
-        //
-        $handles = [];
-        foreach (self::$registryIDs as $key) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, sprintf('https://data.iana.org/rdap/%s.json', $key));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-            $handles[$key] = $ch;
-            curl_multi_add_handle($mh, $ch);
-        }
-
-        //
-        // execute the curl handles in parallel
-        //
-        do {
-            $status = curl_multi_exec($mh, $active);
-            if ($active) curl_multi_select($mh);
-        } while ($active && CURLM_OK == $status);
-
-        //
-        // extract JSON payloads from each curl handle
-        //
-        $data = [];
-        foreach ($handles as $key => $ch) {
-            $data[$key] = curl_multi_getcontent($ch);
-            curl_multi_remove_handle($mh, $ch);
-        }
-
-        curl_multi_close($mh);
+        $data = self::loadRegistryData();
 
         $registries = [];
 
         foreach (self::$registryIDs as $key) {
+            if (is_null($data[$key])) continue;
+
             $json = json_decode($data[$key], false, 512, JSON_THROW_ON_ERROR);
 
             //
@@ -146,12 +116,55 @@ class Registry {
                     //
                     $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
 
-                    $registries[$key]->add($resource, $url);
+                    if (is_string($url)) $registries[$key]->add($resource, $url);
                 }
             }
         }
 
         return $registries;
+    }
+
+    /**
+     * load IANA registry data over multiple parallel HTTP transfers
+     * @return array<string, string|null>
+     */
+    private static function loadRegistryData(): array {
+        $mh = curl_multi_init();
+
+        //
+        // create curl handlers for each URL and add them to the multi-handler
+        //
+        $handles = [];
+        foreach (self::$registryIDs as $key) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, sprintf('https://data.iana.org/rdap/%s.json', $key));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            $handles[$key] = $ch;
+            curl_multi_add_handle($mh, $ch);
+        }
+
+        //
+        // execute the curl handles in parallel
+        //
+        do {
+            $status = curl_multi_exec($mh, $active);
+            if ($active) curl_multi_select($mh);
+        } while ($active && CURLM_OK == $status);
+
+        //
+        // extract JSON payloads from each curl handle
+        //
+        $data = [];
+
+        foreach ($handles as $key => $ch) {
+            $data[$key] = curl_multi_getcontent($ch);
+            curl_multi_remove_handle($mh, $ch);
+        }
+
+        curl_multi_close($mh);
+
+        return $data;
     }
 
     /**
