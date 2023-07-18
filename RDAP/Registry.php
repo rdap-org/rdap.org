@@ -9,17 +9,26 @@ namespace RDAP;
  */
 class Registry {
 
-    /*
+    /**
      * list of IANA bootstrap registries
+     * @var string[]
      */
     private static array $registryIDs = ['dns', 'ipv4', 'ipv6', 'asn', 'object-tags'];
 
-    /*
+    /**
      * list of IP bootstrap registries (that are coalesced into a single "ip" registry)
+     * @var string[]
      */
     private static array $ipTypes = ['ipv4', 'ipv6'];
 
+    /**
+     * @var array<int, mixed>
+     */
     private array $resources = [];
+
+    /**
+     * @var array<int, string>
+     */
     private array $urls = [];
 
     /**
