@@ -267,7 +267,7 @@ class Server extends \OpenSwoole\HTTP\Server {
             return new IP($request->header['fly-client-ip']);
 
         } elseif (isset($request->header['x-forwarded-for'])) {
-            $list = preg_split('/,/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY);
+            $list = preg_split('/,/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
             try {
                 return new IP(trim(array_pop($list)));
