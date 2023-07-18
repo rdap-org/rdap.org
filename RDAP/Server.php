@@ -11,6 +11,7 @@ class Server extends \OpenSwoole\HTTP\Server {
 
     /**
      * this stores the bootstrap registries and is populated by loadRegistries()
+     * @var array<string, Registry>
      */
     private array $registries;
 
@@ -18,13 +19,13 @@ class Server extends \OpenSwoole\HTTP\Server {
      * private handle for STDOUT
      * @var resource
      */
-    private $STDOUT;
+    private mixed $STDOUT;
 
     /*
      * private handle for STDERR
      * @var resource
      */
-    private $STDERR;
+    private mixed $STDERR;
 
     /*
      * how long between refreshes of the registry data (in seconds)
@@ -33,6 +34,7 @@ class Server extends \OpenSwoole\HTTP\Server {
 
     /**
      * array of blocked client addresses, which is populated from an environment variable
+     * @var IP[]
      */
     private array $blocked = [];
 
