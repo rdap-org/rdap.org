@@ -79,11 +79,18 @@ class Registry {
 
     /**
      * return an array of registry objects
-     * @return array<Registry>
+     * @return Registry[]
      */
     public static function load() : array {
-        $data = self::loadRegistryData();
+        return self::parseRegistryData(self::loadRegistryData());
+    }
 
+    /**
+     * load IANA registry data over multiple parallel HTTP transfers
+     * @param array<string, string|null> $data
+     * @return Registry[]
+     */
+    private static function parseRegistryData(array $data): array {
         $registries = [];
 
         foreach (self::$registryIDs as $key) {

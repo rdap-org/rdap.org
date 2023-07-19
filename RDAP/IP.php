@@ -52,6 +52,8 @@ class IP implements \Stringable {
         $this->minAddr  = clone($this->addr);
         $this->maxAddr  = clone($this->addr);
 
+        if ($this->mlen < 0 || $this->mlen > $this->len) throw new Error("Invalid mask length {$this->mlen}");
+
         for ($i = 0 ; $i < $this->len - $this->mlen ; $i++) {
             gmp_clrbit($this->minAddr, $i);
             gmp_setbit($this->maxAddr, $i);
@@ -62,7 +64,11 @@ class IP implements \Stringable {
      * does this block contain $block?
      */
     public function contains(IP $block) : bool {
-        return gmp_cmp($block->minAddr, $this->minAddr) > -1 && gmp_cmp($block->maxAddr, $this->maxAddr) < 1;
+        return (
+            $this->family == $block->family &&
+            gmp_cmp($block->minAddr, $this->minAddr) > -1 &&
+            gmp_cmp($block->maxAddr, $this->maxAddr) < 1
+        );
     }
 
     public function __toString() : string {

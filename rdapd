@@ -14,7 +14,9 @@ require __DIR__.'/RDAP/Server.php';
 
 use OpenSwoole\Constant;
 
-rdapd::main(array_slice($argv, 1));
+if (realpath(__FILE__) == realpath($argv[0])) {
+    rdapd::main(array_slice($argv, 1));
+}
 
 final class rdapd {
 
@@ -32,7 +34,10 @@ final class rdapd {
         'DHE-RSA-CHACHA20-POLY1305'
     ];
 
-    public static function main(array $argv) {
+    /**
+     * @param string[] $argv
+     */
+    public static function main(array $argv): void {
         $opt = getopt('', [
             'help',
             'addr:',
@@ -44,15 +49,17 @@ final class rdapd {
             self::help();
 
         } else {
-            self::start($opt);
+            $tls = array_key_exists('tls', $opt);
+            self::start(
+                addr:   $opt['addr'] ?? '::',
+                port:   intval($opt['port'] ?? ($tls ? 443 : 8080)),
+                tls:    $tls,
+            );
 
         }
     }
 
-    private static function start(array $opt) {
-        $tls    = array_key_exists('tls', $opt);
-        $addr   = $opt['addr'] ?? '::';
-        $port   = intval($opt['port'] ?? ($tls ? 443 : 8080));
+    private static function start(string $addr, int $port, bool $tls): void {
 
         $server = new RDAP\Server(
             host:       $addr,
@@ -66,7 +73,8 @@ final class rdapd {
             $fh = fopen($file, 'w');
 
             if (false === $fh) {
-                fprintf(STDERR, "Unable to open %s for writing: %s\n", $file, error_get_last());
+                $e = (object)error_get_last();
+                fprintf(STDERR, "Unable to open %s for writing: %s\n", $file, $e->message);
                 exit(1);
             }
 
@@ -93,7 +101,7 @@ final class rdapd {
         $server->start();
     }
 
-    private static function help() {
+    private static function help():void {
         $file = __FILE__;
         echo <<<END
 Usage: {$file} [OPTIONS]

@@ -80,9 +80,9 @@ class Server extends \OpenSwoole\HTTP\Server {
         $response->header('content-type', 'application/rdap+json');
         $response->header('server', 'https://github.com/gbxyz/rdap-bootstrap-server');
 
-        try {
-            $peer = $this->getPeer($request);
+        $peer = $this->getPeer($request);
 
+        try {
             $blocked = $this->isBlocked($peer);
 
         } catch (\Throwable $e) {
@@ -91,13 +91,13 @@ class Server extends \OpenSwoole\HTTP\Server {
             $blocked = false;
         }
 
+        $status = self::ERROR;
+
         try {
             $status = ($blocked ? self::FORBIDDEN : $this->generateResponse($request, $response));
 
         } catch (\Throwable $e) {
             fwrite($this->STDERR, $e->getMessage()."\n");
-
-            $status = self::ERROR;
 
         } finally {
             $response->status($status);
@@ -117,7 +117,13 @@ class Server extends \OpenSwoole\HTTP\Server {
         //
         $path = preg_split('/\//', strtolower($request->server['request_uri']), 2, PREG_SPLIT_NO_EMPTY);
 
-        if (0 == count($path)) {
+        if (!is_array($path)) {
+            //
+            // path parse error
+            //
+            return self::BAD_REQUEST;
+
+        } elseif (0 == count($path)) {
             //
             // empty path, so redirect to the about page
             //
@@ -138,15 +144,18 @@ class Server extends \OpenSwoole\HTTP\Server {
         } else {
             list($type, $object) = $path;
 
-            //
-            // coerce the object into the appropriate type
-            //
             try {
-                $object = match ($type) {
-                    'ip'        => new IP($object),
-                    'autnum'    => intval($object),
-                    default     => $object,
+                //
+                // look up the URL for the requested object
+                //
+                $url = match ($type) {
+                    'domain'    => $this->domain($object),
+                    'entity'    => $this->entity($object),
+                    'autnum'    => $this->autnum(intval($object)),
+                    'ip'        => $this->ip(new IP($object)),
+                    default     => null,
                 };
+
             } catch (Error $e) {
                 //
                 // object was somehow malformed or unparseable
@@ -154,17 +163,6 @@ class Server extends \OpenSwoole\HTTP\Server {
                 return self::BAD_REQUEST;
 
             }
-
-            //
-            // look up the URL for the requested object
-            //
-            $url = match ($type) {
-                'domain'    => $this->domain($object),
-                'entity'    => $this->entity($object),
-                'autnum'    => $this->autnum($object),
-                'ip'        => $this->ip($object),
-                default     => null,
-            };
 
             //
             // append type and object to the URL
@@ -253,7 +251,7 @@ class Server extends \OpenSwoole\HTTP\Server {
         //
         // schedule a refresh
         //
-        $this->after(1000 * self::registryTTL, fn() => $this->loadRegistries());
+        $this->after(1000 * self::registryTTL, fn() => $this->loadRegistries()); // @phpstan-ignore-line
     }
 
     /**

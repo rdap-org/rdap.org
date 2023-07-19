@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  COVERAGE_THRESHOLD: 15
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    container: gbxyz/ubuntu-latest-php-82-openswoole:main
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: install pcov
+        run:  apt-get -qqq install php-pcov
+
+      - name: run composer install
+        run: composer install --dev
+
+      - name: phpstan
+        run: ./vendor/bin/phpstan --no-progress --error-format=github --memory-limit=-1 analyze
+
+      - name: pest
+        run: ./vendor/bin/pest --no-progress --coverage --coverage-text
+
+      # - name: coverage check
+      #   run: vendor/bin/coverage-check clover.xml $COVERAGE_THRESHOLD

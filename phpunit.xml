@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  stopOnError="true"
+  stopOnFailure="true"
+  beStrictAboutTestsThatDoNotTestAnything="false"
+  cacheDirectory=".phpunit.cache">
+  <testsuites>
+    <testsuite name="test">
+      <directory suffix=".php">test</directory>
+    </testsuite>
+  </testsuites>
+  <coverage>
+    <report>
+        <clover outputFile="clover.xml" />
+    </report>
+  </coverage>
+  <source>
+    <include>
+      <directory suffix=".php">RDAP</directory>
+    </include>
+  </source>
+</phpunit>

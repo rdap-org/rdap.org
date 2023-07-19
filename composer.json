@@ -1,0 +1,12 @@
+{
+    "require-dev": {
+        "tomasvotruba/cognitive-complexity": "^0.1.1",
+        "pestphp/pest": "^2.8",
+        "rregeer/phpunit-coverage-check": "^0.3.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
