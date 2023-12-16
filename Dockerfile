@@ -1,4 +1,4 @@
-FROM gbxyz/ubuntu-latest-php-82-openswoole:main
+FROM gbxyz/openswoole:php82
 
 WORKDIR /app
 

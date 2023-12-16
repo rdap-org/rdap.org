@@ -11,7 +11,7 @@ env:
 jobs:
   Test:
     runs-on: ubuntu-latest
-    container: gbxyz/ubuntu-latest-php-82-openswoole:main
+    container: gbxyz/openswoole:php82
     steps:
       - uses: actions/checkout@v3
 
