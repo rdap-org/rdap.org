@@ -1,34 +1,34 @@
-app 			= "rdap-bootstrap-server"
-kill_signal 	= "SIGINT"
-kill_timeout 	= 5
-primary_region 	= "lhr"
-processes 		= []
+app             = "rdap-bootstrap-server"
+kill_signal     = "SIGINT"
+kill_timeout    = 5
+primary_region  = "lhr"
+processes       = []
 
 [experimental]
 cmd             = ["/app/rdapd", "--port=443", "--tls"]
 
 [build]
-dockerfile 		= "Dockerfile"
+dockerfile      = "Dockerfile"
 
 [deploy]
-strategy 		= "rolling"
+strategy        = "rolling"
 
 [[services]]
-internal_port 	= 443
+internal_port   = 443
 
 [services.concurrency]
-type 			= "requests"
-hard_limit 		= 512
-soft_limit 		= 128
+type            = "requests"
+hard_limit      = 512
+soft_limit      = 128
 
 [[services.ports]]
-port 			= 443
+port            = 443
 
 [services.http_checks]
-grace_period 	= "60s"
-interval 		= "30s"
-timeout 		= "5s"
+grace_period    = "60s"
+interval        = "30s"
+timeout         = "5s"
 tls_skip_verify = true
-method 			= "get"
-path 			= "/heartbeat"
-protocol 		= "https"
+method          = "get"
+path            = "/heartbeat"
+protocol        = "https"
