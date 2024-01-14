@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  COVERAGE_THRESHOLD: 15
+  COVERAGE_THRESHOLD: 35
 
 jobs:
   Test:
@@ -21,11 +21,17 @@ jobs:
       - name: run composer install
         run: composer install --dev
 
+      - name: lint
+        run: |
+          find . -not -path '*/vendor/*' \
+          \( -name '*.php' -o -name rdapd \) \
+          -exec php -l {} \;
+
       - name: phpstan
         run: ./vendor/bin/phpstan --no-progress --error-format=github --memory-limit=-1 analyze
 
       - name: pest
         run: ./vendor/bin/pest --no-progress --coverage --coverage-text
 
-      # - name: coverage check
-      #   run: vendor/bin/coverage-check clover.xml $COVERAGE_THRESHOLD
+      - name: coverage check
+        run: vendor/bin/coverage-check clover.xml $COVERAGE_THRESHOLD
