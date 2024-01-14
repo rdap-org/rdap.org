@@ -10,7 +10,7 @@ use OpenSwoole\Constant;
 class Server extends \OpenSwoole\HTTP\Server {
 
     /**
-     * this stores the bootstrap registries and is populated by loadRegistries()
+     * this stores the bootstrap registries and is populated by updateData()
      * @var array<string, Registry>
      */
     private array $registries;
@@ -70,7 +70,7 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     public function start() : bool {
         fwrite($this->STDERR, "loading registry data...\n");
-        $this->loadRegistries();
+        $this->updateData();
         fwrite($this->STDERR, "ready to accept requests!\n");
         return parent::start();
     }
@@ -238,7 +238,7 @@ class Server extends \OpenSwoole\HTTP\Server {
      * load the IANA registries. this is called once when the server starts
      * and then periodically as a background job
      */
-    private function loadRegistries() : void {
+    protected function updateData() : void {
         try {
             $this->registries = Registry::load();
 
@@ -251,7 +251,7 @@ class Server extends \OpenSwoole\HTTP\Server {
         //
         // schedule a refresh
         //
-        $this->after(1000 * self::registryTTL, fn() => $this->loadRegistries()); // @phpstan-ignore-line
+        $this->after(1000 * self::registryTTL, fn() => $this->updateData()); // @phpstan-ignore-line
     }
 
     /**
