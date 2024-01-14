@@ -109,6 +109,13 @@ class Server extends \OpenSwoole\HTTP\Server {
     }
 
     /**
+     * @return string[]
+     */
+    protected function getPathSegments(Request $request) : array {
+        return preg_split('/\//', strtolower($request->server['request_uri']), 2, PREG_SPLIT_NO_EMPTY) ?: [];
+    }
+
+    /**
      * handle a request
      */
     private function generateResponse(Request $request, Response $response) : int {
