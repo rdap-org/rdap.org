@@ -118,19 +118,11 @@ class Server extends \OpenSwoole\HTTP\Server {
     /**
      * handle a request
      */
-    private function generateResponse(Request $request, Response $response) : int {
-        //
-        // split the path into segments
-        //
-        $path = preg_split('/\//', strtolower($request->server['request_uri']), 2, PREG_SPLIT_NO_EMPTY);
+    protected function generateResponse(Request $request, Response $response) : int {
 
-        if (!is_array($path)) {
-            //
-            // path parse error
-            //
-            return self::BAD_REQUEST;
+        $path = $this->getPathSegments($request);
 
-        } elseif (0 == count($path)) {
+        if (0 == count($path)) {
             //
             // empty path, so redirect to the about page
             //
