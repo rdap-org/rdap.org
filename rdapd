@@ -20,7 +20,7 @@ if (realpath(__FILE__) == realpath($argv[0])) {
 
 final class rdapd {
 
-    const SSL_PROTOCOLS = Constant::SSL_TLSv1_3 | Constant::SSL_TLSv1_2 | Constant::SSL_TLSv1_1;
+    const SSL_PROTOCOLS = Constant::SSL_TLSv1_3 | Constant::SSL_TLSv1_2;
 
     const SSL_CIPHERS = [
         'ECDHE-ECDSA-AES128-GCM-SHA256',
