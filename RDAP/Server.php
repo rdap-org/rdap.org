@@ -19,18 +19,18 @@ class Server extends \OpenSwoole\HTTP\Server {
      * private handle for STDOUT
      * @var resource
      */
-    private mixed $STDOUT;
+    protected mixed $STDOUT;
 
     /*
      * private handle for STDERR
      * @var resource
      */
-    private mixed $STDERR;
+    protected mixed $STDERR;
 
     /*
      * how long between refreshes of the registry data (in seconds)
      */
-    private const registryTTL = 3600;
+    protected const registryTTL = 3600 * 6;
 
     /**
      * array of blocked client addresses, which is populated from an environment variable
@@ -38,12 +38,12 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     private array $blocked = [];
 
-    private const OK            = 200;
-    private const FOUND         = 302;
-    private const BAD_REQUEST   = 400;
-    private const FORBIDDEN     = 403;
-    private const NOT_FOUND     = 404;
-    private const ERROR         = 500;
+    protected const OK            = 200;
+    protected const FOUND         = 302;
+    protected const BAD_REQUEST   = 400;
+    protected const FORBIDDEN     = 403;
+    protected const NOT_FOUND     = 404;
+    protected const ERROR         = 500;
 
     public function __construct(string $host='::', int $port=8080, int $mode=self::POOL_MODE, int $sock_type=Constant::SOCK_TCP) {
         parent::__construct($host, $port, $mode, $sock_type);
