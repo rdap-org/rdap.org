@@ -11,11 +11,17 @@ ini_set('memory_limit',             -1);
 ini_set('max_execution_time',       0);
 
 require __DIR__.'/RDAP/Server.php';
+require __DIR__.'/RDAP/RootServer.php';
 
 use OpenSwoole\Constant;
 
-if (realpath(__FILE__) == realpath($argv[0])) {
-    rdapd::main(array_slice($argv, 1));
+enum serverType {
+    case root;      // serves root.rdap.org and registrars.rdap.org
+    case default;   // boostrap mode, serves rdap.org
+}
+
+if (realpath(__FILE__) == realpath(array_shift($argv))) {
+    rdapd::main($argv);
 }
 
 final class rdapd {
@@ -37,31 +43,35 @@ final class rdapd {
     /**
      * @param string[] $argv
      */
-    public static function main(array $argv): void {
+    public static function main(array $argv) : void {
         $opt = getopt('', [
             'help',
             'addr:',
             'port:',
             'tls',
+            'root',
         ]);
 
-        if (array_key_exists('help', $opt)) {
-            self::help();
+        if (array_key_exists('help', $opt)) self::help();
 
-        } else {
-            $tls = array_key_exists('tls', $opt);
-            self::start(
-                addr:   $opt['addr'] ?? '::',
-                port:   intval($opt['port'] ?? ($tls ? 443 : 8080)),
-                tls:    $tls,
-            );
-
-        }
+        $tls = array_key_exists('tls', $opt);
+        self::start(
+            addr:   $opt['addr'] ?? '::',
+            port:   intval($opt['port'] ?? ($tls ? 443 : 8080)),
+            tls:    $tls,
+            type:   (array_key_exists('root', $opt) ? serverType::root : serverType::default),
+        );
     }
 
-    private static function start(string $addr, int $port, bool $tls): void {
+    private static function start(string $addr, int $port, bool $tls, serverType $type=serverType::default) : void {
 
-        $server = new RDAP\Server(
+        $ns = '\\RDAP';
+        $class = match($type) {
+            serverType::root    => "{$ns}\\RootServer",
+            default             => "{$ns}\\Server",
+        };
+
+        $server = new $class(
             host:       $addr,
             port:       $port,
             sock_type:  ($tls ? Constant::SOCK_TCP | Constant::SSL : Constant::SOCK_TCP),
@@ -101,7 +111,7 @@ final class rdapd {
         $server->start();
     }
 
-    private static function help():void {
+    private static function help() : void {
         $file = __FILE__;
         echo <<<END
 Usage: {$file} [OPTIONS]
@@ -111,6 +121,8 @@ Usage: {$file} [OPTIONS]
   --addr=ADDR   specify IP address (default: ::)
   --port=PORT   specify TCP port (default: 443 when TLS is enabled,
                 8080 otherwise)
+  --root        run the root.rdap.org/registrars.rdap.org server,
+                instead of a bootstrap server
 
 If the --tls argument is provided, the key and certificate will be read
 from the TLS_KEY and TLS_CERT environment variables.
