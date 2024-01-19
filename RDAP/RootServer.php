@@ -127,10 +127,11 @@ class RootServer extends Server {
     private function cleanProcesses(bool $once=false) : void {
         for ($i = 0 ; $i < count($this->procs) ; $i++) {
             $proc = $this->procs[$i];
-            $s = proc_get_status($proc);
-            if (true !== $s['running']) {
-                proc_close($proc);
+            $s = (object)proc_get_status($proc);
+            if (true !== $s->running) {
+                if (abs($s->exitcode) > 0 && $once) exit($s->exitcode);
 
+                proc_close($proc);
                 array_splice($this->procs, $i--, 1);
             }
         }
