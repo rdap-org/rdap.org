@@ -1,0 +1,24 @@
+version: "3"
+
+volumes:
+  tld_cache:
+  rar_cache:
+
+services:
+  bootstrap:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - 8080:8080
+    command: /app/rdapd
+
+  root:
+    build: .
+    volumes:
+      - .:/app
+      - tld_cache:/tmp/tlds
+      - rar_cache:/tmp/registrars
+    ports:
+      - 8181:8181
+    command: ["/app/rdapd", "--root"]
