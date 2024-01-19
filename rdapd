@@ -71,11 +71,15 @@ final class rdapd {
             default             => "{$ns}\\Server",
         };
 
+        fprintf(STDERR, "%s(): instantiating an object of class %s...\n", __METHOD__, $class);
+
         $server = new $class(
             host:       $addr,
             port:       $port,
             sock_type:  ($tls ? Constant::SOCK_TCP | Constant::SSL : Constant::SOCK_TCP),
         );
+
+        fprintf(STDERR, "%s(): configuring server...\n", __METHOD__);
 
         if ($tls) {
             $file = sys_get_temp_dir().'/server.pem';
@@ -107,6 +111,8 @@ final class rdapd {
                 fprintf(STDERR, "now listening on [%s]:%u\n", $port->host, $port->port);
             }
         });
+
+        fprintf(STDERR, "%s(): starting server...\n", __METHOD__);
 
         $server->start();
     }
