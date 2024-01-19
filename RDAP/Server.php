@@ -7,6 +7,9 @@ foreach (glob(__DIR__.'/{Registry,Error,IP}.php', GLOB_BRACE) ?: [] as $f) requi
 use OpenSwoole\HTTP\{Request,Response};
 use OpenSwoole\Constant;
 
+/**
+ * @codeCoverageIgnore
+ */
 class Server extends \OpenSwoole\HTTP\Server {
 
     /**
