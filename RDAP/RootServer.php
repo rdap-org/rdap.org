@@ -18,6 +18,25 @@ class RootServer extends Server {
     private array $procs = [];
 
     /**
+     * load the registry data and then start the server
+     */
+    public function start() : bool {
+        fwrite($this->STDERR, "loading registry data...\n");
+
+        // tell updateData() not to schedule a cleanProcesses() call
+        $this->updateData(false);
+
+        // this is blocking, so we don't start the server until we're sure we can answer
+        while (count($this->procs) > 0) {
+            if (pcntl_sigtimedwait([SIGCHLD], $i, 0, 100_000)) $this->cleanProcesses(true);
+        }
+
+        fwrite($this->STDERR, "ready to accept requests!\n");
+
+        return \OpenSwoole\HTTP\Server::start();
+    }
+
+    /**
      * handle a request
      */
     protected function generateResponse(Request $request, Response $response) : int {
@@ -59,8 +78,9 @@ class RootServer extends Server {
 
     /**
      * update data
+     * @param bool $cleanup if true, a timer will be set to call cleanProcesses() after 5000ms
      */
-    protected function updateData() : void {
+    protected function updateData(bool $cleanup=true) : void {
         //
         // these are the external commands we want to run, and
         // the directory paths to be provided as their argument
@@ -87,11 +107,12 @@ class RootServer extends Server {
             if (in_array($cmd, $running)) continue;
 
             if (!file_exists($dir)) mkdir($dir, 0755, true);
+
             $proc = proc_open([$cmd, $dir], [], $p);
             if (false !== $proc) $this->procs[] = $proc;
         }
 
-        $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
+        if ($cleanup) $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
 
         //
         // schedule a refresh
@@ -99,9 +120,11 @@ class RootServer extends Server {
         $this->after(1000 * self::registryTTL, fn() => $this->updateData()); // @phpstan-ignore-line
     }
 
-    private function cleanProcesses() : void {
-        $closed = 0;
-
+    /**
+     * clean up any finished child processes
+     * @var bool $once if true, a timer will not be set to call this method again after 5000ms
+     */
+    private function cleanProcesses(bool $once=false) : void {
         for ($i = 0 ; $i < count($this->procs) ; $i++) {
             $proc = $this->procs[$i];
             $s = proc_get_status($proc);
@@ -109,12 +132,12 @@ class RootServer extends Server {
                 proc_close($proc);
 
                 array_splice($this->procs, $i--, 1);
-
-                $closed++;
             }
         }
 
-        $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
+        if (count($this->procs) > 0 && !$once) {
+            $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
+        }
     }
 
     private function tld(string $tld) : ?string {
