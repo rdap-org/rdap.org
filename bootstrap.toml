@@ -25,8 +25,8 @@ soft_limit      = 128
 port            = 443
 
 [services.http_checks]
-grace_period    = "60s"
-interval        = "30s"
+grace_period    = "30s"
+interval        = "5s"
 timeout         = "5s"
 tls_skip_verify = true
 method          = "get"
