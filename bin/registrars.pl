@@ -20,6 +20,8 @@ if (!-e $dir || !-d $dir) {
 
 my $json = JSON->new->pretty->canonical;
 
+say STDERR 'updating registrar RDAP data...';
+
 my $all = {
   'rdapConformance' => [ 'rdap_level_0' ],
   'entitySearchResults' => [],
