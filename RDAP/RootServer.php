@@ -13,23 +13,13 @@ class RootServer extends Server {
     private const RARDIR = '/tmp/registrars';
 
     /**
-     * @var resource[]
-     */
-    private array $procs = [];
-
-    /**
      * load the registry data and then start the server
      */
     public function start() : bool {
         fwrite($this->STDERR, "loading registry data...\n");
 
-        // tell updateData() not to schedule a cleanProcesses() call
+        // tell updateData() not to run the updater scripts in the background
         $this->updateData(false);
-
-        // this is blocking, so we don't start the server until we're sure we can answer
-        while (count($this->procs) > 0) {
-            if (pcntl_sigtimedwait([SIGCHLD], $i, 0, 100_000)) $this->cleanProcesses(true);
-        }
 
         fwrite($this->STDERR, "ready to accept requests!\n");
 
@@ -78,9 +68,9 @@ class RootServer extends Server {
 
     /**
      * update data
-     * @param bool $cleanup if true, a timer will be set to call cleanProcesses() after 5000ms
+     * @param bool $$background if true, scripts will be run in the background
      */
-    protected function updateData(bool $cleanup=true) : void {
+    protected function updateData(bool $background=true) : void {
         //
         // these are the external commands we want to run, and
         // the directory paths to be provided as their argument
@@ -90,29 +80,12 @@ class RootServer extends Server {
             dirname(__DIR__).'/bin/registrars.pl' => self::RARDIR,
         ];
 
-        //
-        // get all the currently running commands
-        //
-        $running = [];
-        foreach ($this->procs as $proc) {
-            $s = proc_get_status($proc);
-            if (true === $s['running']) $running[] = $s['command'];
-        }
-
-        $p = [];
         foreach ($cmds as $cmd => $dir) {
-            //
-            // command still running, so skip
-            //
-            if (in_array($cmd, $running)) continue;
+            $fmt = '%s %s 1>&2';
+            if ($background) $fmt .= ' &';
 
-            if (!file_exists($dir)) mkdir($dir, 0755, true);
-
-            $proc = proc_open([$cmd, $dir], [], $p);
-            if (false !== $proc) $this->procs[] = $proc;
+            shell_exec(sprintf($fmt, escapeshellcmd($cmd), escapeshellarg($dir)));
         }
-
-        if ($cleanup) $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
 
         //
         // schedule a refresh
