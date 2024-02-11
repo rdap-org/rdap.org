@@ -2,6 +2,8 @@
 
 namespace RDAP;
 
+require_once __DIR__.'/Error.php';
+
 use OpenSwoole\HTTP\{Request,Response};
 
 /**
@@ -81,6 +83,9 @@ class RootServer extends Server {
         ];
 
         foreach ($cmds as $cmd => $dir) {
+            if (!file_exists($dir)) @mkdir($dir, 0700, true);
+            if (!is_dir($dir)) throw new Error("{$dir} is not a directory");
+
             $fmt = '%s %s 1>&2';
             if ($background) $fmt .= ' &';
 
