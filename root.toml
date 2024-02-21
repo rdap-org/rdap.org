@@ -5,7 +5,7 @@ primary_region  = "lhr"
 processes       = []
 
 [experimental]
-cmd             = ["/app/rdapd", "--root"]
+cmd             = ["/app/bin/rootd"]
 
 [build]
 dockerfile      = "Dockerfile"
