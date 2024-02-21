@@ -1,0 +1,24 @@
+#!/bin/sh
+export PATH="$PATH:/app:$(dirname "$0")"
+
+update_data()
+{
+  registrars.pl /tmp/registrars &
+  PID1=$!
+
+  root.pl /tmp/tlds &
+  PID2=$!
+
+  wait $PID1 $PID2
+}
+
+update_data
+
+rdapd --root &
+
+while true ; do
+  sleep 3600
+  update_data
+done
+
+wait
