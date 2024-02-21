@@ -18,13 +18,7 @@ class RootServer extends Server {
      * load the registry data and then start the server
      */
     public function start() : bool {
-        fwrite($this->STDERR, "loading registry data...\n");
-
-        // tell updateData() not to run the updater scripts in the background
-        $this->updateData(false);
-
         fwrite($this->STDERR, "ready to accept requests!\n");
-
         return \OpenSwoole\HTTP\Server::start();
     }
 
@@ -70,53 +64,10 @@ class RootServer extends Server {
 
     /**
      * update data
-     * @param bool $$background if true, scripts will be run in the background
+     * @param bool $background if true, scripts will be run in the background
      */
     protected function updateData(bool $background=true) : void {
-        //
-        // these are the external commands we want to run, and
-        // the directory paths to be provided as their argument
-        //
-        $cmds = [
-            dirname(__DIR__).'/bin/root.pl' => self::ROOTDIR,
-            dirname(__DIR__).'/bin/registrars.pl' => self::RARDIR,
-        ];
-
-        foreach ($cmds as $cmd => $dir) {
-            if (!file_exists($dir)) @mkdir($dir, 0700, true);
-            if (!is_dir($dir)) throw new Error("{$dir} is not a directory");
-
-            $fmt = '%s %s 1>&2';
-            if ($background) $fmt .= ' &';
-
-            shell_exec(sprintf($fmt, escapeshellcmd($cmd), escapeshellarg($dir)));
-        }
-
-        //
-        // schedule a refresh
-        //
-        $this->after(1000 * self::registryTTL, fn() => $this->updateData()); // @phpstan-ignore-line
-    }
-
-    /**
-     * clean up any finished child processes
-     * @var bool $once if true, a timer will not be set to call this method again after 5000ms
-     */
-    private function cleanProcesses(bool $once=false) : void {
-        for ($i = 0 ; $i < count($this->procs) ; $i++) {
-            $proc = $this->procs[$i];
-            $s = (object)proc_get_status($proc);
-            if (true !== $s->running) {
-                if (abs($s->exitcode) > 0 && $once) exit($s->exitcode);
-
-                proc_close($proc);
-                array_splice($this->procs, $i--, 1);
-            }
-        }
-
-        if (count($this->procs) > 0 && !$once) {
-            $this->after(5000, fn() => $this->cleanProcesses()); // @phpstan-ignore-line
-        }
+        // do nothing
     }
 
     private function tld(string $tld) : ?string {

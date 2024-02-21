@@ -21,4 +21,4 @@ services:
       - rar_cache:/tmp/registrars
     ports:
       - 8181:8181
-    command: ["/app/rdapd", "--root"]
+    command: ["/app/bin/rootd"]

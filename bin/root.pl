@@ -69,7 +69,9 @@ foreach my $tld (@tlds) {
     my $jfile = sprintf('%s/%s.json', $dir, $tld);
 
     my $data;
-    if ( -e $jfile && stat($jfile) >= time() - TTL_SECS) {
+    if (-e $jfile && stat($jfile) >= time() - TTL_SECS) {
+        printf(STDERR "file %s is up to date\n", $jfile);
+
         my @data = read_file($jfile);
         $data = $json->decode(join('', @data));
 

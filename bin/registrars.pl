@@ -9,6 +9,8 @@ use feature qw(say);
 use utf8;
 use strict;
 
+my $updateTime = DateTime->now->iso8601;
+
 $Data::Mirror::TTL_SECONDS = 3600;
 
 my $dir = $ARGV[0] || getcwd();
@@ -105,7 +107,7 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
 
 	$data->{'events'} = [ {
 		'eventAction' => 'last update of RDAP database',
-		'eventDate' => DateTime->now->iso8601,
+		'eventDate' => $updateTime,
 	} ];
 
 	#

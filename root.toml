@@ -18,7 +18,7 @@ internal_port   = 8080
 force_https     = true
 
 [[http_service.checks]]
-grace_period    = "300s"
+grace_period    = "60s"
 interval        = "5s"
 timeout         = "5s"
 method          = "get"
