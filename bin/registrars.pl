@@ -2,7 +2,7 @@
 use Cwd;
 use Data::Mirror qw(mirror_file);
 use DateTime;
-use IO::File;
+use File::Slurp;
 use JSON;
 use open qw(:utf8);
 use feature qw(say);
@@ -124,17 +124,14 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
 	#
 	my $jfile = sprintf('%s/%s.json', $dir, $data->{'handle'});
 
-	my $file = IO::File->new;
-	if (!$file->open($jfile, '>:utf8')) {
-		printf(STDERR "Cannot write to '%s': %s\n", $jfile, $!);
-		next;
+    if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($data))) {
+        printf(STDERR "Unable to write data to '%s': %s\n", $jfile, $!);
+        exit(1);
 
-	} else {
-		$file->print($json->encode($data));
-		$file->close;
-
+    } else {
         say STDERR sprintf('wrote %s', $jfile);
-	}
+
+    }
 
     $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
     delete($data->{'notices'});
@@ -147,16 +144,14 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
 # write RDAP object to disk
 #
 my $jfile = sprintf('%s/_all.json', $dir);
-my $file = IO::File->new;
-if (!$file->open($jfile, '>:utf8')) {
-	printf(STDERR "Cannot write to '%s': %s\n", $jfile, $!);
-	exit(1);
+
+if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($all))) {
+    printf(STDERR "Unable to write to '%s': %s\n", $jfile, $!);
+    exit(1);
 
 } else {
-	$file->print($json->encode($all));
-    $file->close;
-
     say STDERR sprintf('wrote %s', $jfile);
+
 }
 
 say STDERR 'done';
