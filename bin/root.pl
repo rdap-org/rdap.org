@@ -65,6 +65,39 @@ my $all = {
 say STDERR 'generating RDAP records...';
 
 foreach my $tld (@tlds) {
+    my $data = process_tld($tld);
+
+    $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
+    delete($data->{'notices'});
+    delete($data->{'rdapConformance'});
+
+    push(@{$all->{'domainSearchResults'}}, $data);
+}
+
+#
+# write RDAP object to disk
+#
+my $jfile = sprintf('%s/_all.json', $dir);
+
+if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($all))) {
+    printf(STDERR "Unable to write to '%s': %s\n", $jfile, $!);
+    exit(1);
+
+} else {
+    say STDERR sprintf('wrote %s', $jfile);
+
+}
+
+say STDERR 'done';
+
+#
+# returns an arrayref containing an empty jcard-compliant data structure
+#
+sub empty_vcard_array { [ 'vcard', [ [ 'version', {}, 'text', '4.0' ] ] ] }
+
+sub process_tld {
+    my $tld = shift;
+
     my $file  = sprintf('%s/%s.txt',  $dir, $tld);
     my $jfile = sprintf('%s/%s.json', $dir, $tld);
 
@@ -99,7 +132,7 @@ foreach my $tld (@tlds) {
 
                 $socket->close;
 
-                if (!write_file($file, @data)) {
+                if (!write_file($file, {'binmode' => ':utf8'}, @data)) {
                     printf(STDERR "Unable to write data to '%s': %s\n", $file, $!);
                     exit(1);
 
@@ -409,7 +442,7 @@ foreach my $tld (@tlds) {
         #
         # write RDAP object to disk
         #
-        if (!write_file($jfile, $json->encode($data))) {
+        if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($data))) {
             printf(STDERR "Unable to write to '%s': %s\n", $jfile, $!);
             next;
 
@@ -419,30 +452,5 @@ foreach my $tld (@tlds) {
         }
     }
 
-    $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
-    delete($data->{'notices'});
-    delete($data->{'rdapConformance'});
-
-    push(@{$all->{'domainSearchResults'}}, $data);
+    return $data;
 }
-
-#
-# write RDAP object to disk
-#
-my $jfile = sprintf('%s/_all.json', $dir);
-
-if (!write_file($jfile, $json->encode($all))) {
-    printf(STDERR "Unable to write to '%s': %s\n", $jfile, $!);
-    exit(1);
-
-} else {
-    say STDERR sprintf('wrote %s', $jfile);
-
-}
-
-say STDERR 'done';
-
-#
-# returns an arrayref containing an empty jcard-compliant data structure
-#
-sub empty_vcard_array { [ 'vcard', [ [ 'version', {}, 'text', '4.0' ] ] ] }
