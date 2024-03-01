@@ -88,7 +88,7 @@ class RootServer extends Server {
     }
 
     protected function help() : string {
-        return json_encode([
+        return strval(json_encode([
             'rdapConformance' => ['rdap_level_0'],
             'notices' => [[
                 'title' => 'About this service',
@@ -102,6 +102,6 @@ class RootServer extends Server {
                     'rel'   => 'related',
                 ]],
             ]]
-        ]);
+        ]));
     }
 }

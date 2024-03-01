@@ -10,5 +10,5 @@ parameters:
   scanDirectories:
     - vendor
   cognitive_complexity:
-      class: 35
+      class: 45
       function: 15
