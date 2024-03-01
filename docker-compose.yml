@@ -20,5 +20,5 @@ services:
       - tld_cache:/tmp/tlds
       - rar_cache:/tmp/registrars
     ports:
-      - 8181:8181
+      - 8181:8080
     command: ["/app/bin/rootd"]
