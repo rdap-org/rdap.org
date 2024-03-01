@@ -43,6 +43,7 @@ class RootServer extends Server {
             $content = match(count($path)) {
                 1 => match($path[0]) {
                     'heartbeat' => 'OK',
+                    'help'      => $this->help(),
                     'domains'   => $this->tlds(),
                     'entities'  => $this->registrars(),
                     default     => null,
@@ -84,5 +85,23 @@ class RootServer extends Server {
 
     private function registrars() : ?string {
         return @file_get_contents(self::RARDIR.'/_all.json') ?: null;
+    }
+
+    protected function help() : string {
+        return json_encode([
+            'rdapConformance' => ['rdap_level_0'],
+            'notices' => [[
+                'title' => 'About this service',
+                'description' => [
+                    'This service provides information about top-level domains and ICANN-accredited registrars. It is NOT provided by the IANA.'
+                ],
+                'links' => [[
+                    'title' => 'Further information',
+                    'value' => 'https://about.rdap.org',
+                    'href'  => 'https://about.rdap.org',
+                    'rel'   => 'related',
+                ]],
+            ]]
+        ]);
     }
 }

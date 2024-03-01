@@ -131,11 +131,25 @@ class Server extends \OpenSwoole\HTTP\Server {
             //
             $url = 'https://about.rdap.org/';
 
-        } elseif (1 == count($path) && 'heartbeat' == $path[0]) {
-            //
-            // heartbeat request for internal monitoring purposes
-            //
-            return SELF::OK;
+        } elseif (1 == count($path)) {
+            if ('heartbeat' == $path[0]) {
+                //
+                // heartbeat request for internal monitoring purposes
+                //
+                return SELF::OK;
+
+            } elseif ('help' == $path[0]) {
+                //
+                // help request
+                //
+                $response->write($this->help());
+
+                return SELF::OK;
+
+            } else {
+                return SELF::BAD_REQUEST;
+
+            }
 
         } elseif (2 != count($path)) {
             //
@@ -289,5 +303,24 @@ class Server extends \OpenSwoole\HTTP\Server {
     private function isBlocked(IP $ip) : bool {
         foreach ($this->blocked as $block) if ($block->contains($ip)) return true;
         return false;
+    }
+
+    protected function help() : string {
+        return json_encode([
+            'rdapConformance' => ['rdap_level_0'],
+            'notices' => [[
+                'title' => 'About this service',
+                'description' => [
+                    'RDAP.org aims to support users and developers of RDAP clients by providing a "bootstrap server", i.e. single end point for RDAP queries.',
+                    'RDAP.org aggregates information about all known RDAP servers. RDAP clients can send RDAP queries to RDAP.org, which will then redirect requests to the appropriate RDAP service.'
+                ],
+                'links' => [[
+                    'title' => 'Further information',
+                    'value' => 'https://about.rdap.org',
+                    'href'  => 'https://about.rdap.org',
+                    'rel'   => 'related',
+                ]],
+            ]]
+        ]);
     }
 }
