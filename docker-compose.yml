@@ -17,8 +17,8 @@ services:
     build: .
     volumes:
       - .:/app
-      - tld_cache:/tmp/tlds
-      - rar_cache:/tmp/registrars
+      - tld_cache:/tmp/cache/tlds
+      - rar_cache:/tmp/cache/registrars
     ports:
       - 8181:8080
     command: ["/app/bin/rootd"]

@@ -1,17 +1,20 @@
 #!/bin/sh
 export PATH="$PATH:/app:$(dirname "$0")"
 
-mkdir -p /tmp/registrars /tmp/tlds
+BASEDIR="/tmp/cache"
+ROOTDIR="$BASEDIR/tlds"
+RARDIR="$BASEDIR/registrars"
+mkdir -p "$ROOTDIR" "$RARDIR"
 
 update_data()
 {
-  registrars.pl /tmp/registrars &
-  PID1=$!
+  registrars.pl "$RARDIR" &
+  PID1="$!"
 
-  root.pl /tmp/tlds &
-  PID2=$!
+  root.pl "$ROOTDIR" &
+  PID2="$!"
 
-  wait $PID1 $PID2
+  wait "$PID1" "$PID2"
 }
 
 update_data

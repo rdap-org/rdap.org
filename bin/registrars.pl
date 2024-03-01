@@ -49,7 +49,7 @@ my $object = $json->decode($data);
 
 my $rars = $object->{'accredited-registrars-{"languageTag":"en","siteLanguageTag":"en","slug":"accredited-registrars"}'}->{'data'}->{'accreditedRegistrarsOperations'}->{'registrars'};
 
-say STDERR 'generating RDAP records...';
+say STDERR 'generating RDAP records for registrars...';
 
 foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
     my $id = $rar->{'ianaNumber'};
@@ -127,10 +127,6 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
     if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($data))) {
         printf(STDERR "Unable to write data to '%s': %s\n", $jfile, $!);
         exit(1);
-
-    } else {
-        say STDERR sprintf('wrote %s', $jfile);
-
     }
 
     $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
@@ -139,6 +135,8 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
 
     push(@{$all->{'entitySearchResults'}}, $data);
 }
+
+say STDERR 'RDAP records generated, writing registrar search result file...';
 
 #
 # write RDAP object to disk

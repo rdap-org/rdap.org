@@ -11,8 +11,8 @@ use OpenSwoole\HTTP\{Request,Response};
  */
 class RootServer extends Server {
 
-    private const ROOTDIR = '/tmp/tlds';
-    private const RARDIR = '/tmp/registrars';
+    private const ROOTDIR = '/tmp/cache/tlds';
+    private const RARDIR = '/tmp/cache/registrars';
 
     /**
      * load the registry data and then start the server

@@ -62,7 +62,7 @@ my $all = {
   'domainSearchResults' => [],
 };
 
-say STDERR 'generating RDAP records...';
+say STDERR 'generating RDAP records for TLDs...';
 
 foreach my $tld (@tlds) {
     my $data = process_tld($tld);
@@ -73,6 +73,8 @@ foreach my $tld (@tlds) {
 
     push(@{$all->{'domainSearchResults'}}, $data);
 }
+
+say STDERR 'RDAP records generated, writing TLD search result file...';
 
 #
 # write RDAP object to disk
@@ -103,8 +105,6 @@ sub process_tld {
 
     my $data;
     if (-e $jfile && stat($jfile) >= time() - TTL_SECS) {
-        printf(STDERR "file %s is up to date\n", $jfile);
-
         my @data = read_file($jfile);
         $data = $json->decode(join('', @data));
 
@@ -135,10 +135,6 @@ sub process_tld {
                 if (!write_file($file, {'binmode' => ':utf8'}, @data)) {
                     printf(STDERR "Unable to write data to '%s': %s\n", $file, $!);
                     exit(1);
-
-                } else {
-                    say STDERR sprintf('updated WHOIS record for .%s', $tld);
-
                 }
             }
         }
@@ -445,10 +441,6 @@ sub process_tld {
         if (!write_file($jfile, {'binmode' => ':utf8'}, $json->encode($data))) {
             printf(STDERR "Unable to write to '%s': %s\n", $jfile, $!);
             next;
-
-        } else {
-            say STDERR sprintf('wrote %s', $jfile);
-
         }
     }
 

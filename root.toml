@@ -24,3 +24,7 @@ timeout         = "5s"
 method          = "get"
 path            = "/heartbeat"
 protocol        = "http"
+
+[mounts]
+source="cache"
+destination="/tmp/cache"
