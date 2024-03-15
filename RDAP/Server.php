@@ -218,7 +218,17 @@ class Server extends \OpenSwoole\HTTP\Server {
      * get the base URL for the given domain
      */
     private function domain(string $domain) : ?string {
-        return $this->registries['dns']->search(fn($tld) => str_ends_with($domain, '.'.$tld));
+        return $this->registries['dns']->search(function($tld) use ($domain) {
+            if (empty($tld) && false == strpos($domain, '.')) {
+                // empty TLD indicates the root zone, and no dot indicates
+                // domain is a TLD
+                return true;
+
+            } else {
+                return str_ends_with($domain, '.'.$tld));
+
+            }
+        });
     }
 
     /**
