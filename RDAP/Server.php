@@ -225,7 +225,7 @@ class Server extends \OpenSwoole\HTTP\Server {
                 return true;
 
             } else {
-                return str_ends_with($domain, '.'.$tld));
+                return str_ends_with($domain, '.'.$tld);
 
             }
         });
