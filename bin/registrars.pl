@@ -2,12 +2,24 @@
 use Cwd;
 use Data::Mirror qw(mirror_file);
 use DateTime;
+use Encode;
 use File::Slurp;
-use JSON;
+use JSON::XS;
 use open qw(:utf8);
 use feature qw(say);
 use utf8;
 use strict;
+
+say STDERR 'updating registrar RDAP data...';
+
+my $NOTICE = {
+    'title' => 'About This Service',
+    'description' => [
+        'Please note that this RDAP service is NOT provided by the IANA.',
+        '',
+        'For more information, please see https://about.rdap.org',
+    ],
+};
 
 my $updateTime = DateTime->now->iso8601;
 
@@ -20,17 +32,16 @@ if (!-e $dir || !-d $dir) {
 	exit(1);
 }
 
-my $json = JSON->new->pretty->canonical;
-
-say STDERR 'updating registrar RDAP data...';
+my $json = JSON::XS->new->utf8->pretty->canonical;
 
 my $all = {
   'rdapConformance' => [ 'rdap_level_0' ],
+  'notices' => [ $NOTICE ],
   'entitySearchResults' => [],
 };
 
 my $file = mirror_file('https://www.icann.org/en/accredited-registrars');
-say STDERR 'retrieved registrar list';
+say STDERR 'retrieved registrar list, attempting to parse';
 
 my $doc = XML::LibXML->load_html(
     'location'          => $file,
@@ -42,10 +53,11 @@ my $doc = XML::LibXML->load_html(
     'no_cdata'          => 1,
 );
 
-my $data = (grep { 'serverApp-state' eq $_->getAttribute('id') && 'application/json' eq $_->getAttribute('type') } $doc->getElementsByTagName('script'))[0]->childNodes->item(0)->data;
+say STDERR 'searching for embedded JSON...';
+my $data = (grep { 'ng-state' eq $_->getAttribute('id') && 'application/json' eq $_->getAttribute('type') } $doc->getElementsByTagName('script'))[0]->childNodes->item(0)->data;
 $data =~ s/\&q;/"/g;
 
-my $object = $json->decode($data);
+my $object = $json->decode(Encode::encode_utf8($data));
 
 my $rars = $object->{'accredited-registrars-{"languageTag":"en","siteLanguageTag":"en","slug":"accredited-registrars"}'}->{'data'}->{'accreditedRegistrarsOperations'}->{'registrars'};
 
@@ -94,16 +106,7 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
 		});
 	}
 
-	$data->{'notices'} = [
-		{
-			'title'	=> 'About This Service',
-			'description' => [
-				'Please note that this RDAP service is NOT provided by the IANA.',
-				'',
-				'For more information, please see https://about.rdap.org',
-			],
-		}
-	];
+	$data->{'notices'} = [ $NOTICE ];
 
 	$data->{'events'} = [ {
 		'eventAction' => 'last update of RDAP database',
@@ -129,7 +132,6 @@ foreach my $rar (sort { $a->{'ianaNumber'} <=> $b->{'ianaNumber'} } @{$rars}) {
         exit(1);
     }
 
-    $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
     delete($data->{'notices'});
     delete($data->{'rdapConformance'});
 
