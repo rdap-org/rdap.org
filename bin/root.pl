@@ -165,11 +165,12 @@ sub process_tld {
                 );
 
                 if ($socket) {
-                    printf(STDERR "Connected to %s:%u on attempt #%u\n", WHOIS_HOST, WHOIS_PORT, $i+2) if ($i > 0);
+                    printf(STDERR "Connected to %s:%u on attempt #%u\n", WHOIS_HOST, WHOIS_PORT, $i+1) if ($i > 0);
                     last TRY;
 
                 } else {
                     printf(STDERR "Unable to connect to %s:%u: %s\n", WHOIS_HOST, WHOIS_PORT, $@);
+                    sleep($i+1);
 
                 }
             }
