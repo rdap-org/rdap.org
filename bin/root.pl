@@ -6,8 +6,10 @@ use File::Slurp;
 use File::stat;
 use IO::Socket;
 use JSON::XS;
+use List::Util qw(min);
 use Object::Anon;
 use POSIX qw(floor);
+use Storable qw(dclone);
 use constant {
     TTL_SECS    => 3600,
     WHOIS_HOST  => 'whois.iana.org',
@@ -15,8 +17,18 @@ use constant {
 };
 use open qw(:utf8);
 use feature qw(say);
+use threads;
 use utf8;
 use strict;
+
+my $NOTICE = {
+    'title' => 'About This Service',
+    'description' => [
+        'Please note that this RDAP service is NOT provided by the IANA.',
+        '',
+        'For more information, please see https://about.rdap.org',
+    ],
+};
 
 $Data::Mirror::TTL_SECONDS = TTL_SECS;
 
@@ -27,7 +39,7 @@ if (!-e $dir || !-d $dir) {
     exit(1);
 }
 
-my $json = JSON::XS->new->utf8->pretty->canonical;
+my $json = JSON::XS->new->allow_blessed->utf8->pretty->canonical;
 
 say STDERR 'updating root zone RDAP data...';
 
@@ -55,23 +67,48 @@ my $gtlds;
 foreach my $gtld (@{anon(mirror_json('https://www.icann.org/resources/registries/gtlds/v2/gtlds.json'))->gTLDs}) {
     $gtlds->{$gtld->gTLD} = $gtld;
 }
+
 say STDERR 'retrieved gTLD data';
 
 my $all = {
   'rdapConformance' => [ 'rdap_level_0' ],
+  'notices' => [ $NOTICE ],
   'domainSearchResults' => [],
 };
 
 say STDERR 'generating RDAP records for TLDs...';
 
-foreach my $tld (@tlds) {
-    my $data = process_tld($tld);
+my $cpus = 4;
+if (-e q{/proc/cpuinfo}) {
+    $cpus = min($cpus, scalar(grep { /^processor/ } read_file(q{/proc/cpuinfo})));
+}
 
-    $all->{'notices'} = $data->{'notices'} unless (defined($all->{'notices'}));
-    delete($data->{'notices'});
-    delete($data->{'rdapConformance'});
+my @batches;
+my $i = 0;
+while (scalar(@tlds) > 0) {
+    push(@{$batches[++$i % $cpus]}, shift(@tlds));
+}
 
-    push(@{$all->{'domainSearchResults'}}, $data);
+foreach my $batch (@batches) {
+    threads->create({ context => 'list' }, sub {
+        my @records;
+
+        foreach my $tld (@{$batch}) {
+            my $record = process_tld($tld);
+            push(@records, $record);
+        }
+
+        return @records;
+    });
+}
+
+foreach my $thread (threads->list) {
+    foreach my $record (map { dclone($_) } grep { ref($_) ne '' } $thread->join) {
+        delete($record->{'notices'});
+        delete($record->{'rdapConformance'});
+
+        push(@{$all->{'domainSearchResults'}}, $record);
+    }
 }
 
 say STDERR 'RDAP records generated, writing TLD search result file...';
@@ -100,6 +137,8 @@ sub empty_vcard_array { [ 'vcard', [ [ 'version', {}, 'text', '4.0' ] ] ] }
 sub process_tld {
     my $tld = shift;
 
+    printf(STDERR ".%s\n", uc($tld));
+
     my $file  = sprintf('%s/%s.txt',  $dir, $tld);
     my $jfile = sprintf('%s/%s.json', $dir, $tld);
 
@@ -115,15 +154,29 @@ sub process_tld {
             @data = read_file($file);
 
         } else {
-            my $socket = IO::Socket::INET->new(
-                'PeerAddr'  => WHOIS_HOST,
-                'PeerPort'  => WHOIS_PORT,
-                'Type'      => SOCK_STREAM,
-                'Proto'     => 'tcp',
-                'Timeout'   => 5,
-            );
+            my $socket;
+            TRY: for (my $i = 0 ; $i < 3 ; $i++) {
+                $socket = IO::Socket::INET->new(
+                    'PeerAddr'  => WHOIS_HOST,
+                    'PeerPort'  => WHOIS_PORT,
+                    'Type'      => SOCK_STREAM,
+                    'Proto'     => 'tcp',
+                    'Timeout'   => 5,
+                );
+
+                if ($socket) {
+                    printf(STDERR "Connected to %s:%u on attempt #%u\n", WHOIS_HOST, WHOIS_PORT, $i+2) if ($i > 0);
+                    last TRY;
+
+                } else {
+                    printf(STDERR "Unable to connect to %s:%u: %s\n", WHOIS_HOST, WHOIS_PORT, $@);
+
+                }
+            }
+
             if (!$socket) {
-                warn($@);
+                printf(STDERR "Unable to retrieve whois record for .%s\n", uc($tld));
+                return undef;
 
             } else {
                 $socket->print(sprintf("%s\r\n", $tld));
@@ -134,7 +187,7 @@ sub process_tld {
 
                 if (!write_file($file, {'binmode' => ':utf8'}, @data)) {
                     printf(STDERR "Unable to write data to '%s': %s\n", $file, $!);
-                    exit(1);
+                    return undef;
                 }
             }
         }
@@ -221,7 +274,7 @@ sub process_tld {
                     #
                     my ($tag, $alg, $digestType, $digest) = split(/ /, $value, 4);
 
-                    $data->{'secureDNS'}->{'delegationSigned'} = \1;
+                    $data->{'secureDNS'}->{'delegationSigned'} = $JSON::XS::true;
 
                     push(@{$data->{'secureDNS'}->{'dsData'}}, {
                         'keyTag'        => $tag,
@@ -342,16 +395,7 @@ sub process_tld {
             'eventDate'     => DateTime->now->iso8601,
         });
 
-        $data->{'notices'} = [
-            {
-                'title' => 'About This Service',
-                'description' => [
-                    'Please note that this RDAP service is NOT provided by the IANA.',
-                    '',
-                    'For more information, please see https://about.rdap.org',
-                ],
-            }
-        ];
+        $data->{'notices'} = [ $NOTICE ];
 
         #
         # insert comments as a notice
