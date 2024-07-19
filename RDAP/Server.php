@@ -81,7 +81,7 @@ class Server extends \OpenSwoole\HTTP\Server {
     private function handleRequest(Request $request, Response $response) : void {
         $response->header('access-control-allow-origin', '*');
         $response->header('content-type', 'application/rdap+json');
-        $response->header('server', 'https://github.com/gbxyz/rdap-bootstrap-server');
+        $response->header('server', 'https://github.com/rdap-org/rdap.org');
 
         $peer = $this->getPeer($request);
 
