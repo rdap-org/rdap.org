@@ -49,7 +49,7 @@ final class rdapd {
 
         $tls = array_key_exists('tls', $opt);
         self::start(
-            addr:   $opt['addr'] ?? '::',
+            addr:   $opt['addr'] ?? '::', // @phpstan-ignore-line
             port:   intval($opt['port'] ?? ($tls ? 443 : 8080)),
             tls:    $tls,
         );
