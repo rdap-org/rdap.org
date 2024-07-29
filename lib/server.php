@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace RDAP;
+namespace rdap_org;
 
-foreach (glob(__DIR__.'/{Registry,Error,IP}.php', GLOB_BRACE) ?: [] as $f) require_once $f;
+foreach (glob(__DIR__.'/{registry,error,ip}.php', GLOB_BRACE) ?: [] as $f) require_once $f;
 
 use OpenSwoole\HTTP\{Request,Response};
 use OpenSwoole\Constant;
@@ -10,7 +10,7 @@ use OpenSwoole\Constant;
 /**
  * @codeCoverageIgnore
  */
-class Server extends \OpenSwoole\HTTP\Server {
+class server extends \OpenSwoole\HTTP\Server {
 
     /**
      * this stores the bootstrap registries and is populated by updateData()
@@ -58,7 +58,7 @@ class Server extends \OpenSwoole\HTTP\Server {
         // parse the IP_BLOCK_LIST environment variable to get a list of blocked IP addresses
         //
         $this->blocked = array_map(
-            fn($ip) => new IP(trim($ip)),
+            fn($ip) => new ip(trim($ip)),
             preg_split('/,/', getenv('IP_BLOCK_LIST') ?: '', -1, PREG_SPLIT_NO_EMPTY) ?: []
         );
 
@@ -168,7 +168,7 @@ class Server extends \OpenSwoole\HTTP\Server {
                     'domain'    => $this->domain($object),
                     'entity'    => $this->entity($object),
                     'autnum'    => $this->autnum(intval($object)),
-                    'ip'        => $this->ip(new IP($object)),
+                    'ip'        => $this->ip(new ip($object)),
                     default     => null,
                 };
 
@@ -285,24 +285,24 @@ class Server extends \OpenSwoole\HTTP\Server {
      */
     private function getPeer(Request $request) : IP {
         if (isset($request->header['cf-connecting-ip'])) {
-            return new IP($request->header['cf-connecting-ip']);
+            return new ip($request->header['cf-connecting-ip']);
 
         } elseif (isset($request->header['fly-client-ip'])) {
-            return new IP($request->header['fly-client-ip']);
+            return new ip($request->header['fly-client-ip']);
 
         } elseif (isset($request->header['x-forwarded-for'])) {
             $list = preg_split('/,/', $request->header['x-forwarded-for'], -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
             try {
-                return new IP(trim((string)array_pop($list)));
+                return new ip(trim((string)array_pop($list)));
 
             } catch (\Throwable $e) {
-                return new IP($request->server['remote_addr']);
+                return new ip($request->server['remote_addr']);
 
             }
 
         } else {
-            return new IP($request->server['remote_addr']);
+            return new ip($request->server['remote_addr']);
 
         }
     }

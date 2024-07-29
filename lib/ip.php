@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace RDAP;
+namespace rdap_org;
 
 use GMP;
 
 /**
  * class represent an IP address or CIDR block - which may be IPv4 or IPv6
  */
-class IP implements \Stringable {
+class ip implements \Stringable {
 
     /**
      * the IP address
@@ -43,7 +43,7 @@ class IP implements \Stringable {
         $parts = explode('/', $block, 2);
 
         $ip = inet_pton(array_shift($parts));
-        if (false === $ip) throw new Error("Invalid IP address '{$block}'");
+        if (false === $ip) throw new error("Invalid IP address '{$block}'");
 
         $this->addr     = gmp_import($ip);
         $this->family   = (4 == strlen($ip) ? AF_INET : AF_INET6);
@@ -52,7 +52,7 @@ class IP implements \Stringable {
         $this->minAddr  = clone($this->addr);
         $this->maxAddr  = clone($this->addr);
 
-        if ($this->mlen < 0 || $this->mlen > $this->len) throw new Error("Invalid mask length {$this->mlen}");
+        if ($this->mlen < 0 || $this->mlen > $this->len) throw new error("Invalid mask length {$this->mlen}");
 
         for ($i = 0 ; $i < $this->len - $this->mlen ; $i++) {
             gmp_clrbit($this->minAddr, $i);

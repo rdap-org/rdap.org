@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace RDAP;
+namespace rdap_org;
 
 /**
  * this class represents an RDAP bootstrap registry, which
  * maps a "resource" (TLD, object tag, ASN range, CIDR block)
  * to the appropriate RDAP Base URL
  */
-class Registry {
+class registry {
 
     /**
      * list of IANA bootstrap registries

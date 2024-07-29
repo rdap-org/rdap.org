@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php declare(strict_types=1);
 
+namespace rdap_org;
+
 error_reporting(E_ALL);
 
 ini_set('display_startup_errors',   false);
@@ -10,7 +12,7 @@ ini_set('error_log',                '/dev/stderr');
 ini_set('memory_limit',             -1);
 ini_set('max_execution_time',       0);
 
-require __DIR__.'/RDAP/Server.php';
+require __DIR__.'/lib/server.php';
 
 use OpenSwoole\Constant;
 
@@ -57,7 +59,7 @@ final class rdapd {
 
     private static function start(string $addr, int $port, bool $tls) : void {
 
-        $server = new RDAP\Server(
+        $server = new server(
             host:       $addr,
             port:       $port,
             sock_type:  ($tls ? Constant::SOCK_TCP | Constant::SSL : Constant::SOCK_TCP),
