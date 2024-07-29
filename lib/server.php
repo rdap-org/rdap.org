@@ -48,7 +48,12 @@ class server extends \OpenSwoole\HTTP\Server {
     protected const NOT_FOUND     = 404;
     protected const ERROR         = 500;
 
-    public function __construct(string $host='::', int $port=8080, int $mode=self::POOL_MODE, int $sock_type=Constant::SOCK_TCP) {
+    public function __construct(
+        string $host='::',
+        int $port=8080,
+        int $mode=self::POOL_MODE,
+        int $sock_type=Constant::SOCK_TCP
+    ) {
         parent::__construct($host, $port, $mode, $sock_type);
 
         $this->STDOUT = fopen('php://stdout', 'w');
@@ -78,7 +83,10 @@ class server extends \OpenSwoole\HTTP\Server {
         return parent::start();
     }
 
-    private function handleRequest(Request $request, Response $response) : void {
+    private function handleRequest(
+        Request $request,
+        Response $response
+    ) : void {
         $response->header('access-control-allow-origin', '*');
         $response->header('content-type', 'application/rdap+json');
         $response->header('server', 'https://github.com/rdap-org/rdap.org');
@@ -121,7 +129,10 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * handle a request
      */
-    protected function generateResponse(Request $request, Response $response) : int {
+    protected function generateResponse(
+        Request $request,
+        Response $response
+    ) : int {
 
         $path = $this->getPathSegments($request);
 
