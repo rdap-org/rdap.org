@@ -333,6 +333,7 @@ class server extends \OpenSwoole\HTTP\Server {
     protected function help() : string {
         return strval(json_encode([
             'rdapConformance' => ['rdap_level_0'],
+            'lang' => 'en',
             'notices' => [[
                 'title' => 'About this service',
                 'description' => [
@@ -341,9 +342,9 @@ class server extends \OpenSwoole\HTTP\Server {
                 ],
                 'links' => [[
                     'title' => 'Further information',
-                    'value' => 'https://about.rdap.org',
+                    'value' => 'https://rdap.org/help',
                     'href'  => 'https://about.rdap.org',
-                    'rel'   => 'related',
+                    'rel'   => 'about',
                 ]],
             ]]
         ]));
