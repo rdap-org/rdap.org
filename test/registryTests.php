@@ -10,7 +10,7 @@ class registryTests extends PHPUnit\Framework\TestCase {
         global $argv;
 
         require_once dirname(__DIR__).'/rdapd';
-        self::$registries = \RDAP\Registry::load();
+        self::$registries = \rdap_org\registry::load();
     }
 
     public static function domainTestData(): array {

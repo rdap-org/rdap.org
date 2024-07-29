@@ -9,7 +9,7 @@ env:
   COVERAGE_THRESHOLD: 35
 
 jobs:
-  Test:
+  test:
     runs-on: ubuntu-latest
     container: gbxyz/openswoole:php83
     steps:

@@ -10,10 +10,10 @@ class integrationTests extends PHPUnit\Framework\TestCase {
     }
 
     public function testClasses(): void {
-        $this->assertTrue(class_exists('\\RDAP\\Server'));
-        $this->assertTrue(class_exists('\\RDAP\\Registry'));
-        $this->assertTrue(class_exists('\\RDAP\\IP'));
-        $this->assertTrue(class_exists('\\RDAP\\Error'));
-        $this->assertTrue(class_exists('rdapd'));
+        $this->assertTrue(class_exists('\\rdap_org\\server'));
+        $this->assertTrue(class_exists('\\rdap_org\\registry'));
+        $this->assertTrue(class_exists('\\rdap_org\\iP'));
+        $this->assertTrue(class_exists('\\rdap_org\\error'));
+        $this->assertTrue(class_exists('\\rdap_org\\rdapd'));
     }
 }

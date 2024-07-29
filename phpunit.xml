@@ -16,7 +16,7 @@
   </coverage>
   <source>
     <include>
-      <directory suffix=".php">RDAP</directory>
+      <directory suffix=".php">lib</directory>
     </include>
   </source>
 </phpunit>

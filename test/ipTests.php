@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use rdap_org\ip;
+
 class ipTests extends PHPUnit\Framework\TestCase {
 
     public static function ipData(): array {
@@ -36,7 +38,7 @@ class ipTests extends PHPUnit\Framework\TestCase {
      */
     public function testIPAddressParser(string $ip, bool $success): void {
         try {
-            new RDAP\IP($ip);
+            new ip($ip);
             $result = true;
         } catch (Throwable $e) {
             $result = false;
@@ -60,7 +62,7 @@ class ipTests extends PHPUnit\Framework\TestCase {
      * @dataProvider ipContainsData
      */
     public function testContains(string $a, string $b, bool $result): void {
-        $this->assertEquals($result, (new RDAP\IP($a))->contains(new RDAP\IP($b)));
+        $this->assertEquals($result, (new ip($a))->contains(new ip($b)));
     }
 
     public static function stringData() : array {

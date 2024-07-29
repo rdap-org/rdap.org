@@ -14,7 +14,7 @@ class server extends \OpenSwoole\HTTP\Server {
 
     /**
      * this stores the bootstrap registries and is populated by updateData()
-     * @var array<string, Registry>
+     * @var array<string, registry>
      */
     private array $registries;
 
@@ -37,7 +37,7 @@ class server extends \OpenSwoole\HTTP\Server {
 
     /**
      * array of blocked client addresses, which is populated from an environment variable
-     * @var IP[]
+     * @var ip[]
      */
     private array $blocked = [];
 
@@ -172,7 +172,7 @@ class server extends \OpenSwoole\HTTP\Server {
                     default     => null,
                 };
 
-            } catch (Error $e) {
+            } catch (error $e) {
                 //
                 // object was somehow malformed or unparseable
                 //
@@ -199,7 +199,11 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * this outputs a log line in Combined Log Format
      */
-    private function logRequest(Request $request, int $status, IP $peer) : void {
+    private function logRequest(
+        Request $request,
+        int $status,
+        ip $peer
+    ) : void {
         fprintf(
             $this->STDOUT,
             "%s - - [%s] \"%s %s %s\" %03u 0 \"%s\" \"%s\"\n",
@@ -256,7 +260,7 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * get the base URL for the given IP
      */
-    private function ip(IP $ip) : ?string {
+    private function ip(ip $ip) : ?string {
         return $this->registries['ip']->search(fn($range) => $range->contains($ip));
     }
 
@@ -266,9 +270,9 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     protected function updateData() : void {
         try {
-            $this->registries = Registry::load();
+            $this->registries = registry::load();
 
-        } catch (Error $e) {
+        } catch (error $e) {
             fwrite($this->STDERR, $e->getMessage()."\n");
 
             if (empty($this->registries)) exit(1);
@@ -283,7 +287,7 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * parse the request properties to get the client IP
      */
-    private function getPeer(Request $request) : IP {
+    private function getPeer(Request $request) : ip {
         if (isset($request->header['cf-connecting-ip'])) {
             return new ip($request->header['cf-connecting-ip']);
 
@@ -310,7 +314,7 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * check the blocklist for the given IP
      */
-    private function isBlocked(IP $ip) : bool {
+    private function isBlocked(ip $ip) : bool {
         foreach ($this->blocked as $block) if ($block->contains($ip)) return true;
         return false;
     }

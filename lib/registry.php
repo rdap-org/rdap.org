@@ -79,7 +79,7 @@ class registry {
 
     /**
      * return an array of registry objects
-     * @return Registry[]
+     * @return registry[]
      */
     public static function load() : array {
         return self::parseRegistryData(self::loadRegistryData());
@@ -88,7 +88,7 @@ class registry {
     /**
      * load IANA registry data over multiple parallel HTTP transfers
      * @param array<string, string|null> $data
-     * @return Registry[]
+     * @return registry[]
      */
     private static function parseRegistryData(array $data): array {
         $registries = [];
@@ -103,7 +103,7 @@ class registry {
             //
             if (in_array($key, self::$ipTypes)) $key = 'ip';
 
-            if (!isset($registries[$key])) $registries[$key] = new Registry;
+            if (!isset($registries[$key])) $registries[$key] = new registry;
 
             //
             // for whatever reason, the object-tag entity has an extra value in the
@@ -122,7 +122,7 @@ class registry {
                     //
                     $resource = match($key) {
                         'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
-                        'ip'    => new IP($resource),
+                        'ip'    => new ip($resource),
                         default => strtolower($resource),
                     };
 

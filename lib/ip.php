@@ -63,7 +63,7 @@ class ip implements \Stringable {
     /**
      * does this block contain $block?
      */
-    public function contains(IP $block) : bool {
+    public function contains(ip $block) : bool {
         return (
             $this->family == $block->family &&
             gmp_cmp($block->minAddr, $this->minAddr) > -1 &&
