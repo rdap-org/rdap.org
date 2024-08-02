@@ -14,12 +14,15 @@ dockerfile      = "Dockerfile"
 strategy        = "rolling"
 
 [[services]]
-internal_port   = 443
+internal_port         = 443
+auto_stop_machines    = "stop"
+auto_start_machines   = true
+min_machines_running  = 0
 
 [services.concurrency]
-type            = "requests"
-hard_limit      = 512
-soft_limit      = 128
+type            = "connections"
+hard_limit      = 1024
+soft_limit      = 512
 
 [[services.ports]]
 port            = 443
