@@ -22,8 +22,8 @@ min_machines_running  = 1
 
 [services.concurrency]
 type            = "connections"
-hard_limit      = 256
-soft_limit      = 64
+hard_limit      = 512
+soft_limit      = 256
 
 [[services.ports]]
 port            = 443
