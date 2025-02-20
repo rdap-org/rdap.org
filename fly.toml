@@ -17,12 +17,12 @@ strategy        = "rolling"
 internal_port         = 443
 auto_stop_machines    = "stop"
 auto_start_machines   = true
-min_machines_running  = 0
+min_machines_running  = 1
 
 [services.concurrency]
 type            = "connections"
-hard_limit      = 1024
-soft_limit      = 512
+hard_limit      = 256
+soft_limit      = 64
 
 [[services.ports]]
 port            = 443
