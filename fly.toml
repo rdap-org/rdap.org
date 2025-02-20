@@ -14,6 +14,7 @@ dockerfile      = "Dockerfile"
 strategy        = "rolling"
 
 [[services]]
+protocol              = "tcp"
 internal_port         = 443
 auto_stop_machines    = "stop"
 auto_start_machines   = true
