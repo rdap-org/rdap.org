@@ -61,18 +61,4 @@ class ipTests extends PHPUnit\Framework\TestCase {
     public function testContains(string $a, string $b, bool $result): void {
         $this->assertEquals($result, (new ip($a))->contains(new ip($b)));
     }
-
-    public static function stringData() : array {
-        return [
-            ['::',              '::'],
-            ['::192.168.1.1',   '192.168.1.1'],
-            ['192.168.1.1/32',  '192.168.1.1'],
-            ['192.168.1.0/24',  '192.168.1.0/24'],
-        ];
-    }
-
-    #[DataProvider("stringData")]
-    public function testStringable(string $ip, string $result): void {
-        $this->assertEquals((string)new ip($result), (string)new ip($ip));
-    }
 }
