@@ -73,5 +73,6 @@ class ipTests extends PHPUnit\Framework\TestCase {
 
     #[DataProvider("stringData")]
     public function testStringable(string $ip, string $result): void {
+        $this->assertEquals((string)new ip($result), (string)new ip($ip));
     }
 }
