@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 class registryTests extends PHPUnit\Framework\TestCase {
 
     private static array $registries = [];
@@ -22,9 +24,7 @@ class registryTests extends PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @dataProvider domainTestData
-     */
+    #DataProvider("domainTestData")
     public function testDomainRegistry(string $domain, string $url): void {
 
         $result = self::$registries['dns']->search(fn($tld) => str_ends_with($domain, '.'.$tld));

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use rdap_org\ip;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ipTests extends PHPUnit\Framework\TestCase {
 
@@ -33,9 +34,7 @@ class ipTests extends PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @dataProvider ipData
-     */
+    #[DataProvider("ipData")]
     public function testIPAddressParser(string $ip, bool $success): void {
         try {
             new ip($ip);
@@ -58,9 +57,7 @@ class ipTests extends PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @dataProvider ipContainsData
-     */
+    #[DataProvider("ipContainsData")]
     public function testContains(string $a, string $b, bool $result): void {
         $this->assertEquals($result, (new ip($a))->contains(new ip($b)));
     }
@@ -74,9 +71,7 @@ class ipTests extends PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @dataProvider stringData
-     */
+    #[DataProvider("stringData")]
     public function testStringable(string $ip, string $result): void {
     }
 }
