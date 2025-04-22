@@ -24,7 +24,7 @@ class registryTests extends PHPUnit\Framework\TestCase {
         ];
     }
 
-    #DataProvider("domainTestData")
+    #[DataProvider("domainTestData")]
     public function testDomainRegistry(string $domain, string $url): void {
 
         $result = self::$registries['dns']->search(fn($tld) => str_ends_with($domain, '.'.$tld));
