@@ -73,6 +73,9 @@ class ip implements \Stringable {
 
     public function __toString() : string {
         $str = inet_ntop(gmp_export($this->addr));
+        if (false === $str) {
+            throw new error("error converting to string");
+        }
 
         if ($this->mlen < $this->len) $str .= '/'.$this->mlen;
 
