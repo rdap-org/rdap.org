@@ -1,4 +1,4 @@
-FROM gbxyz/openswoole:php83
+FROM gbxyz/openswoole:php84-noble
 
 WORKDIR /app
 
