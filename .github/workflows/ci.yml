@@ -11,12 +11,12 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: gbxyz/openswoole:php83
+    container: gbxyz/openswoole:php84-noble
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: install pcov
-        run:  apt-get -qqq install php8.3-pcov
+        run:  apt -qqq install php8.4-pcov nodejs
 
       - name: run composer install
         run: composer install --dev
