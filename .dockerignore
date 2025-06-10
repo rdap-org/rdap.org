@@ -1,0 +1,15 @@
+.dockerignore
+.git
+.github
+.gitignore
+.phpunit.cache
+clover.xml
+compose.yml
+Dockerfile
+fly.toml
+LICENSE
+phpstan.neon
+phpunit.xml
+README.md
+test
+vendor
