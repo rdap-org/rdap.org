@@ -43,7 +43,7 @@ jobs:
           log-output-if: failure
 
       - name: pest
-        run: ./vendor/bin/pest --parallel --no-progress --coverage --coverage-text
+        run: ./vendor/bin/pest --no-progress --coverage --coverage-text
 
       - name: coverage check
         run: vendor/bin/coverage-check clover.xml $COVERAGE_THRESHOLD
