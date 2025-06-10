@@ -65,7 +65,7 @@ final class rdapd {
             sock_type:  ($tls ? Constant::SOCK_TCP | Constant::SSL : Constant::SOCK_TCP),
         );
 
-        fprintf(STDERR, "%s(): configuring server...\n", __METHOD__);
+        fprintf(STDERR, "%s %s(): configuring server...\n", gmdate('r'), __METHOD__);
 
         if ($tls) {
             $file = sys_get_temp_dir().'/server.pem';
@@ -94,11 +94,11 @@ final class rdapd {
 
         $server->on('Start', function() use ($server) {
             foreach ($server->ports as $port) {
-                fprintf(STDERR, "now listening on [%s]:%u\n", $port->host, $port->port);
+                fprintf(STDERR, "%s now listening on [%s]:%u\n", gmdate('r'), $port->host, $port->port);
             }
         });
 
-        fprintf(STDERR, "%s(): starting server...\n", __METHOD__);
+        fprintf(STDERR, "%s %s(): starting server...\n", gmdate('r'), __METHOD__);
 
         $server->start();
     }
