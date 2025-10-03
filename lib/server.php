@@ -89,7 +89,7 @@ class server extends \OpenSwoole\HTTP\Server {
     ) : void {
         $response->header('access-control-allow-origin', '*');
         $response->header('server', 'github.com/rdap-org/rdap.org');
-        $response->header('expires', gmdate('r'));
+        $response->header('expires', gmdate('r', time()+86400));
         $response->header('cache-control', 'public');
 
         $peer = $this->getPeer($request);
