@@ -88,9 +88,9 @@ class server extends \OpenSwoole\HTTP\Server {
         Response $response
     ) : void {
         $response->header('access-control-allow-origin', '*');
-        $response->header('content-type', 'application/rdap+json');
-        $response->header('server', 'https://github.com/rdap-org/rdap.org');
-        $response->header('connection', 'close');
+        $response->header('server', 'github.com/rdap-org/rdap.org');
+        $response->header('expires', gmdate('r'));
+        $response->header('cache-control', 'public');
 
         $peer = $this->getPeer($request);
 
@@ -154,6 +154,7 @@ class server extends \OpenSwoole\HTTP\Server {
                 //
                 // help request
                 //
+                $response->header('content-type', 'application/rdap+json');
                 $response->write($this->help());
 
                 return SELF::OK;
