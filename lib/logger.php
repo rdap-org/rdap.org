@@ -3,12 +3,12 @@
 namespace rdap_org;
 
 class logger {
-	private static $STDOUT = null;
+	private static mixed $STDOUT = null;
 
 	public static function logRequest(
-		OpenSwoole\HTTP\Request $request,
-		int 										$status,
-		ip 											$peer,
+		\OpenSwoole\HTTP\Request 	$request,
+		int 											$status,
+		ip 												$peer,
 	) : void {
 
 		if (is_null(self::$STDOUT)) self::$STDOUT = fopen('php://stdout', 'w');
