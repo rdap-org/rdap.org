@@ -2,7 +2,7 @@
 
 namespace rdap_org;
 
-foreach (glob(__DIR__.'/{registry,error,ip}.php', GLOB_BRACE) ?: [] as $f) require_once $f;
+foreach (glob(__DIR__.'/{registry,error,ip,logger}.php', GLOB_BRACE) ?: [] as $f) require_once $f;
 
 use OpenSwoole\HTTP\{Request,Response};
 use OpenSwoole\Constant;
@@ -116,7 +116,7 @@ class server extends \OpenSwoole\HTTP\Server {
 
             $response->end();
 
-            $this->logRequest($request, $status, $peer);
+            logger::logRequest($request, $status, $peer);
         }
     }
 
@@ -207,28 +207,6 @@ class server extends \OpenSwoole\HTTP\Server {
         $response->header('location', $url);
 
         return self::FOUND;
-    }
-
-    /**
-     * this outputs a log line in Combined Log Format
-     */
-    private function logRequest(
-        Request $request,
-        int $status,
-        ip $peer
-    ) : void {
-        fprintf(
-            $this->STDOUT,
-            "%s - - [%s] \"%s %s %s\" %03u 0 \"%s\" \"%s\"\n",
-            strval($peer),
-            gmdate('d/m/Y:h:i:s O'),
-            $request->server['request_method'],
-            $request->server['request_uri'],
-            $request->server['server_protocol'],
-            $status,
-            $request->header['referer'] ?? '-', 
-            $request->header['user-agent'] ?? '-', 
-        );
     }
 
     /**
