@@ -19,7 +19,7 @@ class logger {
 
             if (is_string($host) && strlen($host) > 0) {
                 try {
-                    self::$REDIS = new Redis();
+                    self::$REDIS = new \Redis();
 
                     self::$REDIS->connect(
                         $host,
