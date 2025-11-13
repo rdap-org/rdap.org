@@ -114,4 +114,15 @@ class logger {
             }
         }
     }
+
+    protected function stats() : int {
+        self::connectToRedis();
+
+        return [
+            "total_queries"         => self::$REDIS->get("total_queries"),
+            "queries_by_status"     => self::$REDIS->hGetAll("queries_by_status"),
+            "queries_by_user_agent" => self::$REDIS->hGetAll("queries_by_user_agent"),
+            "queries_by_network"    => self::$REDIS->hGetAll("queries_by_network"),
+        ];
+    }
 }
