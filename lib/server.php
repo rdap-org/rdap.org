@@ -41,12 +41,12 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     private array $blocked = [];
 
-    protected const OK            = 200;
-    protected const FOUND         = 302;
-    protected const BAD_REQUEST   = 400;
-    protected const FORBIDDEN     = 403;
-    protected const NOT_FOUND     = 404;
-    protected const ERROR         = 500;
+    public const OK             = 200;
+    public const FOUND          = 302;
+    public const BAD_REQUEST    = 400;
+    public const FORBIDDEN      = 403;
+    public const NOT_FOUND      = 404;
+    public const ERROR          = 500;
 
     public function __construct(
         string $host='::',
