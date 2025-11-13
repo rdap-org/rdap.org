@@ -1,6 +1,6 @@
 FROM gbxyz/openswoole:php84-noble
 
-RUN apt install php-redis
+RUN apt -qqq install php-redis
 
 WORKDIR /app
 
