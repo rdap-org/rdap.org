@@ -163,7 +163,7 @@ class server extends \OpenSwoole\HTTP\Server {
                 //
                 // stats request
                 //
-                return $self->stats($response);
+                return $self->getStats($response);
 
             } else {
                 return SELF::BAD_REQUEST;
@@ -336,7 +336,7 @@ class server extends \OpenSwoole\HTTP\Server {
         ]));
     }
 
-    private function stats(Response $response) : int {
+    private function getStats(Response $response) : int {
 
         // TODO - add authentication
 
