@@ -44,11 +44,31 @@ class logger {
             try {
                 self::$REDIS->incr("total_queries");
 
+                self::$REDIS->hIncrBy("queries_by_status",      (string)$status,                1);
+                self::$REDIS->hIncrBy("queries_by_type",        self::getQueryType($request),   1);
+                self::$REDIS->hIncrBy("queries_by_user_agent",  $request->header['user-agent'], 1);
+                self::$REDIS->hIncrBy("queries_by_network",     self::ipToNetwork($peer),       1);
+
             } catch (\Throwable $e) {
                 error_log($e->getMessage());
 
             }
         }
+    }
+
+    private static function getQueryType(\OpenSwoole\HTTP\Request $request) : string {
+        $segments = server::getPathSegments($request);
+        return strtolower((string)array_shift($segments));
+    }
+
+    private static function ipToNetwork(ip $ip) : string {
+        $len = (AF_INET == $ip->family ? 24 : 48);
+
+        $gmp = gmp_import(gmp_export($ip->addr));
+
+        for ($i = 0 ; $i < $len ; $i++) gmp_clrbit($gmp, $i);
+
+        return sprintf("%s/%u", inet_ntop(gmp_export($gmp)), $len);
     }
 
     private static function connectToRedis() : void {

@@ -23,3 +23,9 @@ services:
         condition: service_started
     environment:
       REDIS_HOSTNAME: redis
+
+  composer-update:
+    restart: "no"
+    extends:
+      service: server
+    command: composer update
