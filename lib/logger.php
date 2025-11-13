@@ -115,7 +115,7 @@ class logger {
         }
     }
 
-    protected function stats() : int {
+    protected function stats() : array {
         self::connectToRedis();
 
         return [
