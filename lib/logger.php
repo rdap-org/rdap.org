@@ -10,52 +10,13 @@ class logger {
     private static mixed $REDIS  = null;
 
     public static function logRequest(
-        \OpenSwoole\HTTP\Request     $request,
-        int                                             $status,
-        ip                                                 $peer,
+        \OpenSwoole\HTTP\Request    $request,
+        int                         $status,
+        ip                          $peer,
     ) : void {
+        self::logAnalytics($request, $status, $peer);
 
         if (is_null(self::$STDOUT)) self::$STDOUT = fopen('php://stdout', 'w');
-
-        if (is_null(self::$REDIS)) {
-            $host = getenv("REDIS_HOSTNAME");
-
-            if (is_string($host) && strlen($host) > 0) {
-                try {
-                    self::$REDIS = new \Redis();
-
-                    self::$REDIS->connect(
-                        $host,
-                        6379,
-                        1,
-                        "",
-                        0,
-                        0,
-                        ["auth" => [getenv("REDIS_USERNAME"), getenv("REDIS_PASSWORD")]]
-                    );
-
-                } catch (\Throwable $e) {
-                    self::$REDIS = null;
-
-                    error_log(sprintf("Unable to connect to Redis server on %s: %s", $host, $e->getMessage()));
-                }
-            }
-        }
-
-        if (!is_null(self::$REDIS)) {
-            if (!self::$REDIS->isConnected()) {
-                self::$REDIS = null;
-
-            } else {
-                try {
-                    self::$REDIS->incr("total_queries");
-
-                } catch (\Throwable $e) {
-                    error_log($e->getMessage());
-
-                }
-            }
-        }
 
         fprintf(
             self::$STDOUT,
@@ -69,5 +30,66 @@ class logger {
             $request->header['referer'] ?? '-', 
             $request->header['user-agent'] ?? '-', 
         );
+    }
+
+    private static function logAnalytics(
+        \OpenSwoole\HTTP\Request    $request,
+        int                         $status,
+        ip                          $peer,
+    ) : void {
+
+        self::connectToRedis();
+
+        if (!is_null(self::$REDIS)) {
+            try {
+                self::$REDIS->incr("total_queries");
+
+            } catch (\Throwable $e) {
+                error_log($e->getMessage());
+
+            }
+        }
+    }
+
+    private static function connectToRedis() : void {
+        if (is_null(self::$REDIS)) {
+            $host = getenv("REDIS_HOSTNAME");
+
+            if (is_string($host) && strlen($host) > 0) {
+                try {
+                    self::$REDIS = new \Redis();
+
+                    $context = [];
+
+                    if (false !== getenv("REDIS_USERNAME")) {
+                        $context["auth"] = [
+                            (string)getenv("REDIS_USERNAME"),
+                            (string)getenv("REDIS_PASSWORD"),
+                        ];
+                    }
+
+                    self::$REDIS->connect(
+                        $host,
+                        6379,
+                        1,
+                        "",
+                        0,
+                        0,
+                        $context
+                    );
+
+                } catch (\Throwable $e) {
+                    self::$REDIS = null;
+
+                    error_log(sprintf("Unable to connect to Redis server on %s: %s", $host, $e->getMessage()));
+                }
+            }
+        }
+
+        if (!is_null(self::$REDIS)) {
+            if (!self::$REDIS->isConnected()) {
+                self::$REDIS = null;
+            }
+        }
     }
 }
