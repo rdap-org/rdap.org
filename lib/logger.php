@@ -4,6 +4,7 @@ namespace rdap_org;
 
 class logger {
 	private static mixed $STDOUT = null;
+    private static mixed $REDIS  = null;
 
 	public static function logRequest(
 		\OpenSwoole\HTTP\Request 	$request,
