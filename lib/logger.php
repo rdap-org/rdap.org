@@ -2,6 +2,9 @@
 
 namespace rdap_org;
 
+/**
+ * @codeCoverageIgnore
+ */
 class logger {
     private static mixed $STDOUT = null;
     private static mixed $REDIS  = null;
