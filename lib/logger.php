@@ -2,6 +2,8 @@
 
 namespace rdap_org;
 
+use OpenSwoole\HTTP\{Request,Response};
+
 /**
  * @codeCoverageIgnore
  */
@@ -10,9 +12,9 @@ class logger {
     private static mixed $REDIS  = null;
 
     public static function logRequest(
-        \OpenSwoole\HTTP\Request    $request,
-        int                         $status,
-        ip                          $peer,
+        Request $request,
+        int     $status,
+        ip      $peer,
     ) : void {
         self::logAnalytics($request, $status, $peer);
 
@@ -33,9 +35,9 @@ class logger {
     }
 
     private static function logAnalytics(
-        \OpenSwoole\HTTP\Request    $request,
-        int                         $status,
-        ip                          $peer,
+        Request $request,
+        int     $status,
+        ip      $peer,
     ) : void {
 
         self::connectToRedis();
@@ -56,7 +58,7 @@ class logger {
         }
     }
 
-    private static function getQueryType(\OpenSwoole\HTTP\Request $request) : string {
+    private static function getQueryType(Request $request) : string {
         $segments = server::getPathSegments($request);
         return strtolower((string)array_shift($segments));
     }
