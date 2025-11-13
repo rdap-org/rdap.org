@@ -123,7 +123,7 @@ class server extends \OpenSwoole\HTTP\Server {
     /**
      * @return string[]
      */
-    protected function getPathSegments(Request $request) : array {
+    public static function getPathSegments(Request $request) : array {
         return preg_split('/\//', strtolower($request->server['request_uri']), 2, PREG_SPLIT_NO_EMPTY) ?: [];
     }
 
@@ -135,7 +135,7 @@ class server extends \OpenSwoole\HTTP\Server {
         Response $response
     ) : int {
 
-        $path = $this->getPathSegments($request);
+        $path = self::getPathSegments($request);
 
         if (0 == count($path)) {
             //
