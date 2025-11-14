@@ -118,7 +118,7 @@ class logger {
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, int|array<string, int>>
      */
     public static function stats() : array {
         self::connectToRedis();
