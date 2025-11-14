@@ -125,7 +125,7 @@ class logger {
         $stats["timestamp"] = time();
         $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
 
-        foreach (["queries_by_status", "queries_by_user_agent", "queries_by_network"] as $name) {
+        foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network"] as $name) {
             $stats[$name] = [];
             $data = self::$REDIS->hGetAll($name);
             foreach ($data as $key => $value) {
@@ -134,5 +134,13 @@ class logger {
         }
 
         return $stats;
+    }
+
+    public static function clearStats() : void {
+        self::connectToRedis();
+
+        foreach (self::$REDIS->keys("*") as $key) {
+            self::$REDIS->del($key);
+        }
     }
 }

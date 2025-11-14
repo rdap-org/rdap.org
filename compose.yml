@@ -23,6 +23,7 @@ services:
         condition: service_started
     environment:
       REDIS_HOSTNAME: redis
+      STATS_TOKEN: unsafe_stats_token
 
   composer-update:
     restart: "no"

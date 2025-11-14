@@ -42,10 +42,13 @@ class server extends \OpenSwoole\HTTP\Server {
     private array $blocked = [];
 
     public const OK             = 200;
+    public const NO_CONTENT     = 204;
     public const FOUND          = 302;
     public const BAD_REQUEST    = 400;
+    public const UNAUTHORIZED   = 401;
     public const FORBIDDEN      = 403;
     public const NOT_FOUND      = 404;
+    public const BAD_METHOD     = 405;
     public const ERROR          = 500;
 
     public function __construct(
@@ -341,11 +344,33 @@ class server extends \OpenSwoole\HTTP\Server {
         Response $response
     ) : int {
 
-        var_export($request); // TODO - add authentication
+        if (!isset($request->header['authorization'])) return self::UNAUTHORIZED;
 
-        $response->header('content-type', 'application/rdap+json');
-        $response->write(strval(json_encode(logger::stats())));
+        if (1 != preg_match('/^Bearer\s+(.*)$/i', $request->header['authorization'], $matches)) return self::UNAUTHORIZED;
 
-        return SELF::OK;
+        $token = getenv("STATS_TOKEN");
+        if (false === $token || $token !== $matches[1]) return self::UNAUTHORIZED;
+
+        try {
+            if ("DELETE" == $request->server['request_method']) {
+                logger::clearStats();
+
+                return SELF::NO_CONTENT;
+            }
+
+            if ("GET" == $request->server['request_method']) {
+                $response->header('content-type', 'application/rdap+json');
+                $response->write(strval(json_encode(logger::stats())));
+
+                return SELF::OK;
+            }
+
+        } catch (\Throwable $e) {
+            fwrite($this->STDERR, $e->getMessage()."\n");
+
+            return self::ERROR;
+        }
+
+        return self::BAD_METHOD;
     }
 }
