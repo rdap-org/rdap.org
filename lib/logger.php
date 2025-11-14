@@ -46,8 +46,10 @@ class logger {
             try {
                 self::$REDIS->incr("total_queries");
 
-                self::$REDIS->hIncrBy("queries_by_status",      (string)$status,                1);
-                self::$REDIS->hIncrBy("queries_by_type",        self::getQueryType($request),   1);
+                self::$REDIS->hIncrBy("queries_by_status", (string)$status, 1);
+
+                if ($status < 400) self::$REDIS->hIncrBy("queries_by_type", self::getQueryType($request), 1);
+
                 self::$REDIS->hIncrBy("queries_by_user_agent",  $request->header['user-agent'], 1);
                 self::$REDIS->hIncrBy("queries_by_network",     self::ipToNetwork($peer),       1);
 
