@@ -163,7 +163,7 @@ class server extends \OpenSwoole\HTTP\Server {
                 //
                 // stats request
                 //
-                return $self->getStats($response);
+                return $this->getStats($response);
 
             } else {
                 return SELF::BAD_REQUEST;
