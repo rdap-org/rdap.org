@@ -115,14 +115,24 @@ class logger {
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function stats() : array {
         self::connectToRedis();
 
-        return [
-            "total_queries"         => self::$REDIS->get("total_queries"),
-            "queries_by_status"     => self::$REDIS->hGetAll("queries_by_status"),
-            "queries_by_user_agent" => self::$REDIS->hGetAll("queries_by_user_agent"),
-            "queries_by_network"    => self::$REDIS->hGetAll("queries_by_network"),
-        ];
+        $stats = [];
+        $stats["timestamp"] = time();
+        $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
+
+        foreach (["queries_by_status", "queries_by_user_agent", "queries_by_network"] as $name) {
+            $stats[$name] = [];
+            $data = self::$REDIS->hGetAll($name);
+            foreach ($data as $key => $value) {
+                $stats[$name][$key] = (int)$value;
+            }
+        }
+
+        return $stats;
     }
 }
