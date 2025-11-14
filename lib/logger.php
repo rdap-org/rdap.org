@@ -3,6 +3,7 @@
 namespace rdap_org;
 
 use OpenSwoole\HTTP\{Request,Response};
+use Redis;
 
 /**
  * @codeCoverageIgnore
@@ -44,6 +45,8 @@ class logger {
 
         if (!is_null(self::$REDIS)) {
             try {
+                self::$REDIS->multi(Redis::PIPELINE);
+
                 self::$REDIS->incr("total_queries");
 
                 self::$REDIS->hIncrBy("queries_by_status", (string)$status, 1);
@@ -52,6 +55,8 @@ class logger {
 
                 self::$REDIS->hIncrBy("queries_by_user_agent",  $request->header['user-agent'], 1);
                 self::$REDIS->hIncrBy("queries_by_network",     self::ipToNetwork($peer),       1);
+
+                self::$REDIS->exec();
 
             } catch (\Throwable $e) {
                 error_log($e->getMessage());
@@ -81,7 +86,7 @@ class logger {
 
             if (is_string($host) && strlen($host) > 0) {
                 try {
-                    self::$REDIS = new \Redis();
+                    self::$REDIS = new Redis();
 
                     $context = [];
 
@@ -144,8 +149,12 @@ class logger {
     public static function clearStats() : void {
         self::connectToRedis();
 
+        self::$REDIS->multi(Redis::MULTI);
+
         foreach (self::$REDIS->keys("*") as $key) {
             self::$REDIS->del($key);
         }
+
+        self::$REDIS->exec();
     }
 }
