@@ -64,7 +64,7 @@ class logger {
     }
 
     private static function ipToNetwork(ip $ip) : string {
-        $len = (AF_INET == $ip->family ? 24 : 48);
+        $len = (AF_INET == $ip->family ? 32-24 : 128-48);
 
         $gmp = gmp_import(gmp_export($ip->addr));
 
