@@ -163,7 +163,7 @@ class server extends \OpenSwoole\HTTP\Server {
                 //
                 // stats request
                 //
-                return $this->getStats($response);
+                return $this->getStats($request, $response);
 
             } else {
                 return SELF::BAD_REQUEST;
@@ -336,9 +336,12 @@ class server extends \OpenSwoole\HTTP\Server {
         ]));
     }
 
-    private function getStats(Response $response) : int {
+    private function getStats(
+        Request     $request,
+        Response $response
+    ) : int {
 
-        // TODO - add authentication
+        var_export($request); // TODO - add authentication
 
         $response->header('content-type', 'application/rdap+json');
         $response->write(strval(json_encode(logger::stats())));
