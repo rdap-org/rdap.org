@@ -127,9 +127,12 @@ class logger {
 
         foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network"] as $name) {
             $stats[$name] = [];
+
             $data = self::$REDIS->hGetAll($name);
-            foreach ($data as $key => $value) {
-                $stats[$name][$key] = (int)$value;
+            if (is_array($data)) {
+                foreach ($data as $key => $value) {
+                    $stats[$name][$key] = intval($value ?? 0); /* @phpstan-ignore-line */
+                }
             }
         }
 

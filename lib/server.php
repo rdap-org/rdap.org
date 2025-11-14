@@ -166,7 +166,7 @@ class server extends \OpenSwoole\HTTP\Server {
                 //
                 // stats request
                 //
-                return $this->getStats($request, $response);
+                return $this->statsHandler($request, $response);
 
             } else {
                 return SELF::BAD_REQUEST;
@@ -339,7 +339,7 @@ class server extends \OpenSwoole\HTTP\Server {
         ]));
     }
 
-    private function getStats(
+    private function statsHandler(
         Request     $request,
         Response $response
     ) : int {
@@ -352,25 +352,30 @@ class server extends \OpenSwoole\HTTP\Server {
         if (false === $token || $token !== $matches[1]) return self::UNAUTHORIZED;
 
         try {
-            if ("DELETE" == $request->server['request_method']) {
-                logger::clearStats();
-
-                return SELF::NO_CONTENT;
-            }
-
-            if ("GET" == $request->server['request_method']) {
-                $response->header('content-type', 'application/rdap+json');
-                $response->write(strval(json_encode(logger::stats())));
-
-                return SELF::OK;
-            }
+            return match ($request->server['request_method']) {
+                "DELETE"    => $this->deleteStats($response),
+                "GET"       => $this->getStats($response),
+                default     => self::BAD_METHOD,
+            };
 
         } catch (\Throwable $e) {
             fwrite($this->STDERR, $e->getMessage()."\n");
 
             return self::ERROR;
         }
-
-        return self::BAD_METHOD;
     }
+
+    private function deleteStats(Response $response) : int {
+        logger::clearStats();
+
+        return SELF::NO_CONTENT;
+    }
+
+    private function getStats(Response $response) : int {
+        $response->header('content-type', 'application/rdap+json');
+        $response->write(strval(json_encode(logger::stats())));
+
+        return SELF::OK;
+    }   
+
 }
