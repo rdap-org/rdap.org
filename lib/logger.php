@@ -17,11 +17,16 @@ class logger {
         int     $status,
         ip      $peer,
     ) : void {
-        self::logAnalytics($request, $status, $peer);
-        // self::logCombinedLogFormat($request, $status, $peer);
+        if (false !== getenv("REDIS_HOSTNAME")) {
+            self::logAnalytics($request, $status, $peer);
+        }
+
+        if (false !== getenv("ENABLE_OUTPUT_LOGGING")) {
+            self::logCombinedLogFormat($request, $status, $peer);
+        }
     }
 
-    private static logCombinedLogFormat(
+    private static function logCombinedLogFormat(
         Request $request,
         int     $status,
         ip      $peer,

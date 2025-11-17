@@ -24,6 +24,7 @@ services:
     environment:
       REDIS_HOSTNAME: redis
       STATS_TOKEN: unsafe_stats_token
+      ENABLE_OUTPUT_LOGGING: "true"
 
   composer-update:
     restart: "no"
