@@ -66,8 +66,8 @@ class logger {
 
                 if ($status < 400) self::$REDIS->hIncrBy("queries_by_type", self::getQueryType($request), 1);
 
-                self::$REDIS->hIncrBy("queries_by_user_agent",  $request->header['user-agent'] ?? "-", 1);
-                self::$REDIS->hIncrBy("queries_by_network",     self::ipToNetwork($peer),       1);
+                self::$REDIS->hIncrBy("queries_by_user_agent", $request->header['user-agent'] ?? "-", 1);
+                self::$REDIS->hIncrBy("queries_by_network", self::ipToNetwork($peer), 1);
 
                 self::$REDIS->exec();
 
