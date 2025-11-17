@@ -162,12 +162,16 @@ class logger {
     public static function clearStats() : void {
         self::connectToRedis();
 
-        self::$REDIS->multi(Redis::MULTI);
+        if (!is_null(self::$REDIS)) {
+            try {
+                foreach (self::$REDIS->keys("*") as $key) {
+                    self::$REDIS->del($key);
+                }
 
-        foreach (self::$REDIS->keys("*") as $key) {
-            self::$REDIS->del($key);
+            } catch (\Throwable $e) {
+                error_log($e->getMessage());
+
+            }
         }
-
-        self::$REDIS->exec();
     }
 }
