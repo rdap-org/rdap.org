@@ -18,10 +18,10 @@ class logger {
         ip      $peer,
     ) : void {
         self::logAnalytics($request, $status, $peer);
-        self::logCombinedLogForamt($request, $status, $peer);
+        self::logCombinedLogFormat($request, $status, $peer);
     }
 
-    private static logCombinedLogForamt(
+    private static logCombinedLogFormat(
         Request $request,
         int     $status,
         ip      $peer,
