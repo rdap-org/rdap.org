@@ -18,7 +18,7 @@ class logger {
         ip      $peer,
     ) : void {
         self::logAnalytics($request, $status, $peer);
-        self::logCombinedLogFormat($request, $status, $peer);
+        // self::logCombinedLogFormat($request, $status, $peer);
     }
 
     private static logCombinedLogFormat(
