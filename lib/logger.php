@@ -18,6 +18,14 @@ class logger {
         ip      $peer,
     ) : void {
         self::logAnalytics($request, $status, $peer);
+        self::logCombinedLogForamt($request, $status, $peer);
+    }
+
+    private static logCombinedLogForamt(
+        Request $request,
+        int     $status,
+        ip      $peer,
+    ) : void {
 
         if (is_null(self::$STDOUT)) self::$STDOUT = fopen('php://stdout', 'w');
 
