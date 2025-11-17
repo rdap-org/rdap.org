@@ -88,7 +88,7 @@ class logger {
 
         $gmp = gmp_import(gmp_export($ip->addr));
 
-        for ($i = 0 ; $i < $len ; $i++) gmp_clrbit($gmp, $i);
+        for ($i = 0 ; $i < (AF_INET == $ip->family ? 32-24 : 128-48) ; $i++) gmp_clrbit($gmp, $i);
 
         return sprintf("%s/%u", inet_ntop(gmp_export($gmp)), $len);
     }
@@ -139,21 +139,29 @@ class logger {
      * @return array<string, int|array<string, int>>
      */
     public static function stats() : array {
-        self::connectToRedis();
-
         $stats = [];
-        $stats["timestamp"] = time();
-        $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
 
-        foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network"] as $name) {
-            $stats[$name] = [];
+        try {
+            self::connectToRedis();
 
-            $data = self::$REDIS->hGetAll($name);
-            if (is_array($data)) {
-                foreach ($data as $key => $value) {
-                    $stats[$name][$key] = intval($value ?? 0); /* @phpstan-ignore-line */
+            $stats["timestamp"] = time();
+            $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
+
+            foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network"] as $name) {
+                $stats[$name] = [];
+
+                $data = self::$REDIS->hGetAll($name);
+                if (is_array($data)) {
+                    foreach ($data as $key => $value) {
+                        $stats[$name][$key] = intval($value ?? 0); /* @phpstan-ignore-line */
+                    }
                 }
             }
+
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+            $stats["error"] = $e->getMessage();
+
         }
 
         return $stats;
@@ -162,16 +170,14 @@ class logger {
     public static function clearStats() : void {
         self::connectToRedis();
 
-        if (!is_null(self::$REDIS)) {
-            try {
-                foreach (self::$REDIS->keys("*") as $key) {
-                    self::$REDIS->del($key);
-                }
-
-            } catch (\Throwable $e) {
-                error_log($e->getMessage());
-
+        try {
+            foreach (self::$REDIS->keys("*") as $key) {
+                self::$REDIS->del($key);
             }
+
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+
         }
     }
 }
