@@ -31,5 +31,3 @@ grace_period = '30s'
 method = 'get'
 path = '/heartbeat'
 protocol = 'http'
-path = "/heartbeat"
-protocol = "https"
