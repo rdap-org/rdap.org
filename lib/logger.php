@@ -136,7 +136,7 @@ class logger {
     }
 
     /**
-     * @return array<string, int|array<string, int>>
+     * @return array<string, int|array<string, int>|string>
      */
     public static function stats() : array {
         $stats = [];
