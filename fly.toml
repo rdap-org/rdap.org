@@ -25,10 +25,11 @@ hard_limit = 250
 soft_limit = 200
 
 [[services.http_checks]]
-interval = '5s'
-timeout = '5s'
+interval = '3s'
+timeout = '1s'
 grace_period = '30s'
 method = 'get'
 path = '/heartbeat'
 protocol = 'http'
-tls_skip_verify = true
+path = "/heartbeat"
+protocol = "https"
