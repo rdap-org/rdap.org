@@ -55,7 +55,7 @@ class server extends \OpenSwoole\HTTP\Server {
         string $host='::',
         int $port=8080,
         int $mode=self::POOL_MODE,
-        int $sock_type=Constant::SOCK_TCP
+        int $sock_type=Constant::SOCK_TCP,
     ) {
         parent::__construct($host, $port, $mode, $sock_type);
 
@@ -88,7 +88,7 @@ class server extends \OpenSwoole\HTTP\Server {
 
     private function handleRequest(
         Request $request,
-        Response $response
+        Response $response,
     ) : void {
         $response->header('access-control-allow-origin', '*');
         $response->header('server', 'github.com/rdap-org/rdap.org');
@@ -135,7 +135,7 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     protected function generateResponse(
         Request $request,
-        Response $response
+        Response $response,
     ) : int {
 
         $path = self::getPathSegments($request);
@@ -340,9 +340,11 @@ class server extends \OpenSwoole\HTTP\Server {
     }
 
     private function statsHandler(
-        Request     $request,
-        Response $response
+        Request $request,
+        Response $response,
     ) : int {
+
+        $response->header('cache-control', 'no-store');
 
         if (!isset($request->header['authorization'])) return self::UNAUTHORIZED;
 
