@@ -68,7 +68,7 @@ class logger {
                 if ($status < 400) {
                     self::$REDIS->hIncrBy("queries_by_type", $type, 1);
 
-                    if ("domain" == $type) self::$REDIS->hIncrBy("queries_by_tld", self::getTLD($request), 1);
+                    if ("domain" == $type) self::$REDIS->hIncrBy("queries_by_tld", self::getTLD($request) ?? "", 1);
                 }
 
                 self::$REDIS->hIncrBy("queries_by_user_agent", $request->header['user-agent'] ?? "-", 1);
@@ -86,6 +86,20 @@ class logger {
     private static function getQueryType(Request $request) : string {
         $segments = server::getPathSegments($request);
         return strtolower((string)array_shift($segments));
+    }
+
+    private static function getTLD(Request $request) : ?string {
+        $segments = server::getPathSegments($request);
+
+        if ("domain" != strtolower(array_shift($segments))) return null;
+
+        $domain = array_shift($segments);
+        if (!is_string($domain) || strlen($domain) < 1) return null;
+
+        $labels = array_filter(explode(".", strtolower($domain)), fn($l) => strlen($l) > 0);
+        if (count($labels) < 1) return null;
+
+        return array_pop($labels);
     }
 
     private static function ipToNetwork(ip $ip) : string {
