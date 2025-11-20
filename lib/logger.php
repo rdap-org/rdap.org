@@ -91,7 +91,7 @@ class logger {
     private static function getTLD(Request $request) : ?string {
         $segments = server::getPathSegments($request);
 
-        if ("domain" != strtolower(array_shift($segments))) return null;
+        if ("domain" !== strtolower((string)array_shift($segments))) return null;
 
         $domain = array_shift($segments);
         if (!is_string($domain) || strlen($domain) < 1) return null;
