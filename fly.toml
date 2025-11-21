@@ -25,9 +25,9 @@ hard_limit = 250
 soft_limit = 200
 
 [[services.http_checks]]
-interval = '3s'
-timeout = '1s'
-grace_period = '30s'
+interval = '30s'
+timeout = '3s'
+grace_period = '15s'
 method = 'get'
 path = '/heartbeat'
 protocol = 'http'
