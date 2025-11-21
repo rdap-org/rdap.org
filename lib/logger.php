@@ -72,6 +72,11 @@ class logger {
                     if ("domain" == $type) self::$REDIS->hIncrBy("queries_by_tld", self::getTLD($request) ?? "", 1);
                 }
 
+                if (array_key_exists("origin", $request->header)) {
+                    $origin = trim((string)($request->header["origin"] ?? ""));
+                    if (strlen($origin) > 0) self::$REDIS->hIncrBy("queries_by_origin", $origin, 1);
+                }
+
                 self::$REDIS->hIncrBy("queries_by_user_agent", $request->header['user-agent'] ?? "-", 1);
                 self::$REDIS->hIncrBy("queries_by_network", self::ipToNetwork($peer), 1);
 
@@ -167,7 +172,7 @@ class logger {
             $stats["timestamp"] = time();
             $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
 
-            foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network", "queries_by_tld"] as $name) {
+            foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network", "queries_by_tld", "queries_by_origin"] as $name) {
                 $stats[$name] = [];
 
                 $data = self::$REDIS->hGetAll($name);
