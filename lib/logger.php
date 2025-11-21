@@ -172,7 +172,7 @@ class logger {
             $stats["timestamp"] = time();
             $stats["total_queries"] = (int)self::$REDIS->get("total_queries");
 
-            foreach (["queries_by_status", "queries_by_type", "queries_by_user_agent", "queries_by_network", "queries_by_tld", "queries_by_origin"] as $name) {
+            foreach (preg_grep("/^queries_by_/", self::$REDIS->keys("*")) as $name) {
                 $stats[$name] = [];
 
                 $data = self::$REDIS->hGetAll($name);
