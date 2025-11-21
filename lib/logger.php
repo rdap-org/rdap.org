@@ -74,7 +74,7 @@ class logger {
 
                 if (array_key_exists("origin", $request->header)) {
                     $origin = trim((string)($request->header["origin"] ?? ""));
-                    if (strlen($origin) > 0) self::$REDIS->hIncrBy("queries_by_origin", $origin, 1);
+                    if (!in_array($origin, ["", "null"])) self::$REDIS->hIncrBy("queries_by_origin", $origin, 1);
                 }
 
                 self::$REDIS->hIncrBy("queries_by_user_agent", $request->header['user-agent'] ?? "-", 1);
