@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: install pcov
-        run:  apt -qqq install php8.4-pcov nodejs
+      - name: install dependencies
+        run:  apt -qqq install php8.4-pcov php8.4-redis nodejs
 
       - name: run composer install
         run: composer install --dev
