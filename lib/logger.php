@@ -90,8 +90,12 @@ class logger {
     }
 
     private static function getQueryType(Request $request) : string {
+        static $types = ["entity", "nameserver", "domain", "ip", "autnum", "help", "domains", "nameservers", "entities", "ips", "autnums"];
+
         $segments = server::getPathSegments($request);
-        return strtolower((string)array_shift($segments));
+        $type = strtolower((string)array_shift($segments));
+
+        return in_array($type, $types) ? $type : "other";
     }
 
     private static function getTLD(Request $request) : ?string {
