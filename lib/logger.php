@@ -62,23 +62,18 @@ class logger {
 
                 self::$REDIS->incr("total_queries");
 
-                self::$REDIS->hIncrBy("queries_by_status", (string)$status, 1);
+                self::$REDIS->hIncrBy("queries_by_status",      (string)$status,                        1);
+                self::$REDIS->hIncrBy("queries_by_user_agent",  $request->header['user-agent'] ?? "-",  1);
+                self::$REDIS->hIncrBy("queries_by_network",     self::ipToNetwork($peer),               1);
 
                 $type = self::getQueryType($request);
-
-                if (in_array($status, [302, 404])) {
-                    self::$REDIS->hIncrBy("queries_by_type", $type, 1);
-
-                    if ("domain" == $type) self::$REDIS->hIncrBy("queries_by_tld", self::getTLD($request) ?? "", 1);
-                }
+                if (!is_null($type))    self::$REDIS->hIncrBy("queries_by_type", $type, 1);
+                if ("domain" == $type)  self::$REDIS->hIncrBy("queries_by_tld", self::getTLD($request) ?? "", 1);
 
                 if (array_key_exists("origin", $request->header)) {
                     $origin = trim((string)($request->header["origin"] ?? ""));
                     if (!in_array($origin, ["", "null"])) self::$REDIS->hIncrBy("queries_by_origin", $origin, 1);
                 }
-
-                self::$REDIS->hIncrBy("queries_by_user_agent", $request->header['user-agent'] ?? "-", 1);
-                self::$REDIS->hIncrBy("queries_by_network", self::ipToNetwork($peer), 1);
 
                 self::$REDIS->exec();
 
