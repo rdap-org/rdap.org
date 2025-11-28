@@ -11,8 +11,8 @@
   },
 
   "require-dev": {
-    "tomasvotruba/cognitive-complexity": "*",
-    "pestphp/pest": "*",
-    "rregeer/phpunit-coverage-check": "*"
+    "tomasvotruba/cognitive-complexity": ">=1",
+    "pestphp/pest": ">=4.1.6",
+    "rregeer/phpunit-coverage-check": ">=0.3.1"
   }
 }
