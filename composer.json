@@ -1,16 +1,18 @@
 {
-    "require-dev": {
-        "tomasvotruba/cognitive-complexity": "*",
-        "pestphp/pest": "*",
-        "rregeer/phpunit-coverage-check": "*"
-    },
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
-    },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+
   "require": {
     "ext-curl": "*",
     "ext-redis": "*"
+  },
+
+  "require-dev": {
+    "tomasvotruba/cognitive-complexity": "*",
+    "pestphp/pest": "*",
+    "rregeer/phpunit-coverage-check": "*"
   }
 }
