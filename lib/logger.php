@@ -177,7 +177,7 @@ class logger {
                 $data = self::$REDIS->hGetAll($name);
                 if (is_array($data)) {
                     foreach ($data as $key => $value) {
-                        $stats[$name][$key] = intval($value ?? 0); /* @phpstan-ignore-line */
+                        $stats[$name][$key] = intval($value ?? 0);
                     }
                 }
             }
