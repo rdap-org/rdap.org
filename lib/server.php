@@ -187,11 +187,12 @@ class server extends \OpenSwoole\HTTP\Server {
                 // look up the URL for the requested object
                 //
                 $url = match ($type) {
-                    'domain'    => $this->domain($object),
-                    'entity'    => $this->entity($object),
-                    'autnum'    => $this->autnum(intval($object)),
-                    'ip'        => $this->ip(new ip($object)),
-                    default     => null,
+                    'domain'        => $this->domain($object),
+                    'entity'        => $this->entity($object),
+                    'autnum'        => $this->autnum(intval($object)),
+                    'ip'            => $this->ip(new ip($object)),
+                    'nameserver'    => $this->nameserver($object),
+                    default         => false,
                 };
 
             } catch (error $e) {
@@ -201,6 +202,11 @@ class server extends \OpenSwoole\HTTP\Server {
                 return self::BAD_REQUEST;
 
             }
+
+            //
+            // bogus object type
+            //
+            if (false === $url) return self::BAD_REQUEST;
 
             //
             // append type and object to the URL
@@ -233,6 +239,13 @@ class server extends \OpenSwoole\HTTP\Server {
 
             }
         });
+    }
+
+    /**
+     * get the base URL for the given nameserver
+     */
+    private function nameserver(string $nameserver) : ?string {
+        return $this->domain($nameserver);
     }
 
     /**
