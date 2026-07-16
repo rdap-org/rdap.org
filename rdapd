@@ -16,7 +16,7 @@ require __DIR__.'/lib/server.php';
 
 use OpenSwoole\Constant;
 
-if (realpath(__FILE__) == realpath(array_shift($argv))) {
+if (realpath(__FILE__) == realpath(array_shift($argv))) { // @phpstan-ignore-line
     rdapd::main($argv);
 }
 
