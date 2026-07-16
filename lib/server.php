@@ -295,7 +295,7 @@ class server extends \OpenSwoole\HTTP\Server {
         //
         // schedule a refresh
         //
-        $this->after(1000 * self::registryTTL, fn() => $this->updateData()); // @phpstan-ignore-line
+        $this->after(1000 * self::registryTTL, fn() => $this->updateData());
     }
 
     /**
