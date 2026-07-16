@@ -32,7 +32,7 @@ class server extends \OpenSwoole\HTTP\Server {
     /*
      * how long between refreshes of the registry data (in seconds)
      */
-    protected const registryTTL = 3600 * 6;
+    protected const registryTTL = 600;
 
     /**
      * array of blocked client addresses, which is populated from an environment variable
