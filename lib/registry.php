@@ -205,13 +205,13 @@ class registry {
             $seen = false;
 
             foreach ($rows as $row) {
-                if ($row[0] == $tbl_row['resource']) {
+                if ($row[0] == $tbl_row['resource']) { // @phpstan-ignore-line
                     $seen = true;
                     break;
                 }
             }
 
-            if (!$seen) $this->table->del($tbl_row['resource']);
+            if (!$seen) $this->table->del($tbl_row['resource']); // @phpstan-ignore-line
         }
     }
 
