@@ -10,12 +10,12 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: gbxyz/openswoole:php84-noble
+    container: gbxyz/openswoole:php85-resolute
     steps:
       - uses: actions/checkout@v4
 
       - name: install dependencies
-        run:  apt -qqq install php8.4-pcov php8.4-redis nodejs
+        run:  apt -qqq install php8.5-pcov php8.5-redis nodejs
 
       - name: run composer install
         run: composer install --dev
