@@ -1,6 +1,6 @@
 FROM gbxyz/openswoole:php84-noble
 
-RUN apt -qqq update
+RUN apt -qqq --allow-releaseinfo-change update
 
 RUN apt -qqq install php8.4-redis
 
