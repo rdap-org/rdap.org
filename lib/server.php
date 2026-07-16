@@ -80,8 +80,12 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     public function start() : bool {
         fwrite($this->STDERR, "loading registry data...\n");
-        $this->updateData();
+
+        $this->registries = new registryManager;
+        $this->scheduleDataRefresh();
+
         fwrite($this->STDERR, "ready to accept requests!\n");
+
         return parent::start();
     }
 
@@ -287,15 +291,12 @@ class server extends \OpenSwoole\HTTP\Server {
      * and then periodically as a background job
      */
     protected function updateData() : void {
-        try {
-            $this->registries = new registryManager;
+        $this->registries->update();
 
-        } catch (error $e) {
-            fwrite($this->STDERR, $e->getMessage()."\n");
+        $this->scheduleDataRefresh();
+    }
 
-            if (empty($this->registries)) exit(1);
-        }
-
+    private function scheduleDataRefresh() : void {
         //
         // schedule a refresh
         //

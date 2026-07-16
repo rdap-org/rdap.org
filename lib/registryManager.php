@@ -35,6 +35,28 @@ class registryManager {
         }
     }
 
+    public function update() : void {
+        $urls = self::getRegistryURLs();
+
+        $data = self::getURLs($urls);
+
+        foreach ($data as $url => $registryData) {
+            $type = registry::typeFromURL($url);
+
+            if (!array_key_exists($type, $this->registries)) {
+                $registry = registry::parse($url, $registryData);
+                if (!is_null($registry)) $this->registries[$type] = $registry;
+
+            } else {
+                $this->registries[$type]->update($registryData);
+
+            }
+        }
+    }
+
+    /**
+     * get the registry identified by $type
+     */
     public function get(string $type) : registry {
         if (!array_key_exists($type, $this->registries)) {
             throw new error("Unknown registry type '{$type}'");
