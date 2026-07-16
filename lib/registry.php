@@ -15,13 +15,6 @@ class registry {
     }
 
     /**
-     * list of IANA bootstrap registries. these values correspond to the file
-     * name in the URL.
-     * @var string[]
-     */
-    public static array $types = ['dns', 'ipv4', 'ipv6', 'asn', 'object-tags'];
-
-    /**
      * @var array<int, mixed>
      */
     private array $resources = [];
@@ -94,7 +87,7 @@ class registry {
         // for whatever reason, the object-tag entity has an extra value in the
         // array, so the resources and URLs are at different offsets
         //
-        list($i, $j) = match($type) {
+        list($i, $j) = match($registry->type) {
             'object-tags'   => [1, 2],
             default         => [0, 1],
         };
@@ -111,15 +104,15 @@ class registry {
                     //
                     // coerce the resource into the appropriate type
                     //
-                    $resource = match($type) {
+                    $resource = match($registry->type) {
                         'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
                         'ipv4'  => new ip($resource),
                         'ipv6'  => new ip($resource),
                         default => strtolower($resource),
                     };
 
-                    $this->resources[]  = $resource;
-                    $this->urls[]       = $url;
+                    $registry->resources[]  = $resource;
+                    $registry->urls[]       = $url;
                 }
             }
         }

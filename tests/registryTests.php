@@ -3,29 +3,20 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\Attributes\DataProvider;
-use rdap_org\{registry,ip};
+use rdap_org\{registryManager,registry,ip};
 
 class registryTests extends PHPUnit\Framework\TestCase {
 
-    private static array $registries = [];
+    private static registryManager $registries;
 
-    public static function setUpBeforeClass():void {
+    public static function setUpBeforeClass() : void {
         global $argv;
 
         require_once dirname(__DIR__).'/rdapd';
-        self::$registries = registry::load();
+        self::$registries = new registryManager;
     }
 
-    public static function registryData(): array {
-        return [['dns'], ['ip'], ['asn'], ['object-tags']];
-    }
-
-    #[DataProvider("registryData")]
-    public function testRegistry(string $type): void {
-        $this->assertArrayHasKey($type, self::$registries);
-    }
-
-    public static function domainTestData(): array {
+    public static function domainTestData() : array {
         return [
             [ 'abc.xyz',            'https://rdap.centralnic.com/xyz'               ],
             [ 'verisign-grs.com',   'https://rdap.verisign.com/com/v1'              ],
@@ -35,15 +26,15 @@ class registryTests extends PHPUnit\Framework\TestCase {
     }
 
     #[DataProvider("domainTestData")]
-    public function testDomainRegistry(string $domain, string $url): void {
+    public function testDomainRegistry(string $domain, string $url) : void {
 
-        $result = self::$registries['dns']->search(fn($tld) => str_ends_with($domain, '.'.$tld));
+        $result = self::$registries->get('dns')->search(fn($tld) => str_ends_with($domain, '.'.$tld));
 
         $this->assertIsString($result);
         $this->assertEquals($url, $result);
     }
 
-    public static function ipTestData(): array {
+    public static function ipTestData() : array {
         return [
             [ '1.1.1.1',        'https://rdap.apnic.net',           ],
             [ '8.8.8.8',        'https://rdap.arin.net/registry',   ],
@@ -52,10 +43,16 @@ class registryTests extends PHPUnit\Framework\TestCase {
     }
 
     #[DataProvider("ipTestData")]
-    public function testIPRegistry(string $ip, string $url): void {
+    public function testIPRegistry(string $ip, string $url) : void {
         $ip = new ip($ip);
 
-        $result = self::$registries['ip']->search(fn($range) => $range->contains($ip));
+        $type = match($ip->family) {
+            AF_INET6    => 'ipv6',
+            AF_INET     => 'ipv4',
+            default     => throw new error("Bogus family for '{$ip}'"),
+        };
+
+        $result = self::$registries->get($type)->search(fn($range) => $range->contains($ip));
 
         $this->assertIsString($result);
         $this->assertEquals($url, $result);
