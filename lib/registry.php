@@ -15,16 +15,17 @@ class registry {
     public readonly string $type;
 
     /**
-     * @var array<string[]>
-     */
-    private array $rows = [];
-
-    /**
      * when the registry was last updated (0 means never)
      */
     public float $updated = 0;
 
-    public function __construct(public readonly string $url) {
+    /**
+     * @param mixed[] $rows
+     */
+    public function __construct(
+        public readonly string $url,
+        private array $rows,
+    ) {
         $this->type = self::typeFromURL($this->url);
     }
 
@@ -71,12 +72,12 @@ class registry {
     /**
      * @return int[]
      */
-    private function getArrayIndexes() : array {
+    private static function getArrayIndexes(string $type) : array {
         //
         // for whatever reason, the object-tag entity has an extra value in the
         // array, so the resources and URLs are at different offsets
         //
-        return match($this->type) {
+        return match($type) {
            'object-tags'   => [1, 2],
            default         => [0, 1],
        };
@@ -95,17 +96,32 @@ class registry {
             !is_array($json->services)
         ) return null;
 
-        //
-        // derive the "type" of this registry from the filename
-        //
-        $registry = new self($url);
+        $type = self::typeFromURL($url);
+        $rows = self::extractRows($json, $type);
 
-        list($i, $j) = $registry->getArrayIndexes();
+        return new self(
+            url:    $url,
+            rows:   $rows,
+        );
+    }
+
+    /**
+     * generate a set of table rows from the registry data structure.
+     * @return mixed[]
+     */
+    private static function extractRows(object $json, string $type): array {
+
+        if (
+            !property_exists($json, 'services') ||
+            !is_array($json->services)
+        ) return [];
+
+        list($i, $j) = self::getArrayIndexes($type);
 
         $rows = [];
 
         foreach ($json->services as $service) {
-            if (!is_array($service) || !is_array($service[$i])) continue;
+            if (!is_array($service) || !is_array($service[$i]) || !is_array($service[$j])) continue;
 
             //
             // all resources in this service are associated with the same URL.
@@ -117,12 +133,11 @@ class registry {
 
             if (is_string($url)) {
                 foreach ($service[$i] as $resource) {
-                    if (!is_array($service[$j])) continue;
 
                     //
                     // coerce the resource into the appropriate type
                     //
-                    $resource = match($registry->type) {
+                    $resource = match($type) {
                         'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
                         'ipv4'  => (string)new ip($resource),
                         'ipv6'  => (string)new ip($resource),
@@ -134,18 +149,10 @@ class registry {
             }
         }
 
-        $registry->rows     = $rows; // @phpstan-ignore-line
-        $registry->updated  = microtime(true);
-
-        return $registry;
+        return $rows;
     }
 
-    function update(?string $data) : void {
-        $json = self::parseJSON($data);
-
-        if (!is_object($json)) return;
-
-        list($i, $j) = $this->getArrayIndexes();
+    public function update(?string $data) : void {
     }
 
     /**

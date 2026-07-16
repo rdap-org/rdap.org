@@ -82,6 +82,7 @@ class server extends \OpenSwoole\HTTP\Server {
         fwrite($this->STDERR, "loading registry data...\n");
 
         $this->registries = new registryManager;
+
         $this->scheduleDataRefresh();
 
         fwrite($this->STDERR, "ready to accept requests!\n");
