@@ -2,6 +2,8 @@
 
 namespace rdap_org;
 
+use OpenSwoole\Table;
+
 /**
  * this class represents an RDAP bootstrap registry, which
  * maps a "resource" (TLD, object tag, ASN range, CIDR block)
@@ -19,14 +21,33 @@ class registry {
      */
     public float $updated = 0;
 
+    private Table $table;
+
     /**
      * @param mixed[] $rows
      */
     public function __construct(
         public readonly string $url,
-        private array $rows,
+        array $rows,
     ) {
         $this->type = self::typeFromURL($this->url);
+
+        //
+        // since the table is of fixed size, we give ourselves at least 100%
+        // headroom to allow it to grow through updates. If the cumulative
+        // effect of updates means it runs out of space, a restart is needed.
+        //
+        $this->table = new Table(max(2*count($rows), 1000));
+        $this->table->column('resource',    Table::TYPE_STRING, 128);
+        $this->table->column('url',         Table::TYPE_STRING, 256);
+        $this->table->create();
+
+        foreach ($rows as $row) {
+            $this->table->set((string)$row[0], [
+                'resource'  => $row[0],
+                'url'       => $row[1]
+            ]);
+        }
     }
 
     /**
@@ -43,10 +64,10 @@ class registry {
      */
     public function search(callable $cb) : ?string {
 
-        foreach ($this->rows as $row) {
-            $result = call_user_func($cb, $row[0]);
+        foreach ($this->table as $row) {
+            $result = call_user_func($cb, $row['resource']);
 
-            if (true === $result) return $row[1];
+            if (true === $result) return $row['url'];
         }
 
         return null;
