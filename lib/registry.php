@@ -9,17 +9,17 @@ namespace rdap_org;
  */
 class registry {
 
-    /**
-     * list of IANA bootstrap registries
-     * @var string[]
-     */
-    private static array $registryIDs = ['dns', 'ipv4', 'ipv6', 'asn', 'object-tags'];
+    public function __construct(
+        public readonly string $type,
+    ) {
+    }
 
     /**
-     * list of IP bootstrap registries (that are coalesced into a single "ip" registry)
+     * list of IANA bootstrap registries. these values correspond to the file
+     * name in the URL.
      * @var string[]
      */
-    private static array $ipTypes = ['ipv4', 'ipv6'];
+    public static array $types = ['dns', 'ipv4', 'ipv6', 'asn', 'object-tags'];
 
     /**
      * @var array<int, mixed>
@@ -30,14 +30,6 @@ class registry {
      * @var array<int, string>
      */
     private array $urls = [];
-
-    /**
-     * add a resource and its corresponding URL to the registry
-     */
-    public function add(mixed $resource, string $url) : void {
-        $this->resources[] = $resource;
-        $this->urls[] = $url;
-    }
 
     /**
      * return the number of resources in this registry
@@ -78,109 +70,61 @@ class registry {
     }
 
     /**
-     * return an array of registry objects
-     * @return registry[]
+     * parse a blob of JSON into a registry object
      */
-    public static function load() : array {
-        return self::parseRegistryData(self::loadRegistryData());
-    }
+    public static function parse(string $url, ?string $data) : ?registry {
 
-    /**
-     * load IANA registry data over multiple parallel HTTP transfers
-     * @param array<string, string|null> $data
-     * @return registry[]
-     */
-    private static function parseRegistryData(array $data): array {
-        $registries = [];
+        if (is_null($data)) return null;
 
-        foreach (self::$registryIDs as $key) {
-            if (is_null($data[$key])) continue;
+        try {
+            $json = json_decode($data, false, 512, JSON_THROW_ON_ERROR);
 
-            $json = json_decode($data[$key], false, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            error_log(sprintf("%s(): bogus JSON (%s) for %s", __METHOD__, $e->getMessage(), $url));
+            return null;
 
-            //
-            // v4 and v6 registries are coalesced into a single "ip" registry
-            //
-            if (in_array($key, self::$ipTypes)) $key = 'ip';
+        }
 
-            if (!isset($registries[$key])) $registries[$key] = new registry;
+        //
+        // derive the "type" of this registry from the filename
+        //
+        $registry = new registry(basename($url, '.json'));
 
-            //
-            // for whatever reason, the object-tag entity has an extra value in the
-            // array, so the resources and URLs are at different offsets
-            //
-            list($i, $j) = match($key) {
-                'object-tags'   => [1, 2],
-                default         => [0, 1],
-            };
+        //
+        // for whatever reason, the object-tag entity has an extra value in the
+        // array, so the resources and URLs are at different offsets
+        //
+        list($i, $j) = match($type) {
+            'object-tags'   => [1, 2],
+            default         => [0, 1],
+        };
 
-            foreach ($json->services as $service) {
-                foreach ($service[$i] as $resource) {
+        foreach ($json->services as $service) {
+            foreach ($service[$i] as $resource) {
+                //
+                // remove any trailing slashes from the URL (just so the URL
+                // construction in handleRequest() looks cleaner)
+                //
+                $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
 
+                if (is_string($url)) {
                     //
                     // coerce the resource into the appropriate type
                     //
-                    $resource = match($key) {
+                    $resource = match($type) {
                         'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
-                        'ip'    => new ip($resource),
+                        'ipv4'  => new ip($resource),
+                        'ipv6'  => new ip($resource),
                         default => strtolower($resource),
                     };
 
-                    //
-                    // remove any trailing slashes from the URL (just so the URL construction
-                    // in handleRequest() looks cleaner)
-                    //
-                    $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
-
-                    if (is_string($url)) $registries[$key]->add($resource, $url);
+                    $this->resources[]  = $resource;
+                    $this->urls[]       = $url;
                 }
             }
         }
 
-        return $registries;
-    }
-
-    /**
-     * load IANA registry data over multiple parallel HTTP transfers
-     * @return array<string, string|null>
-     */
-    private static function loadRegistryData(): array {
-        $mh = curl_multi_init();
-
-        //
-        // create curl handlers for each URL and add them to the multi-handler
-        //
-        $handles = [];
-        foreach (self::$registryIDs as $key) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, sprintf('https://data.iana.org/rdap/%s.json', $key));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-            $handles[$key] = $ch;
-            curl_multi_add_handle($mh, $ch);
-        }
-
-        //
-        // execute the curl handles in parallel
-        //
-        do {
-            $status = curl_multi_exec($mh, $active);
-            if ($active) curl_multi_select($mh);
-        } while ($active && CURLM_OK == $status);
-
-        //
-        // extract JSON payloads from each curl handle
-        //
-        $data = [];
-
-        foreach ($handles as $key => $ch) {
-            $data[$key] = curl_multi_getcontent($ch);
-            curl_multi_remove_handle($mh, $ch);
-        }
-
-        curl_multi_close($mh);
-
-        return $data;
+        return $registry;
     }
 
     /**

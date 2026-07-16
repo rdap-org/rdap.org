@@ -16,7 +16,7 @@ class server extends \OpenSwoole\HTTP\Server {
      * this stores the bootstrap registries and is populated by updateData()
      * @var array<string, registry>
      */
-    private array $registries;
+    private array $registries = [];
 
     /*
      * private handle for STDOUT
@@ -275,7 +275,11 @@ class server extends \OpenSwoole\HTTP\Server {
      * get the base URL for the given IP
      */
     private function ip(ip $ip) : ?string {
-        return $this->registries['ip']->search(fn($range) => $range->contains($ip));
+        $type = match($ip->family) {
+            AF_INET6    => 'ipv6',
+            AF_INET     => 'ipv4',
+        };
+        return $this->registries[$type]->search(fn($range) => $range->contains($ip));
     }
 
     /**
@@ -284,7 +288,13 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     protected function updateData() : void {
         try {
-            $this->registries = registry::load();
+            if (0 == count($this->registries)) {
+                $this->loadRegistries();
+
+            } else {
+                $this->updateRegistries();
+
+            }
 
         } catch (error $e) {
             fwrite($this->STDERR, $e->getMessage()."\n");
@@ -296,6 +306,52 @@ class server extends \OpenSwoole\HTTP\Server {
         // schedule a refresh
         //
         $this->after(1000 * self::registryTTL, fn() => $this->updateData());
+    }
+
+    /**
+     * returns an array containing the URLs of all RDAP bootstrap registries
+     * @return string[]
+     */
+    private function getRegistryURLs() : array {
+        $urls = [];
+
+        foreach (registry::$types as $type) {
+            $urls[] = sprintf('https://data.iana.org/rdap/%s.json', $type);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * initialise the IANA registries
+     */
+    private function loadRegistries() : void {
+        $urls = self::getRegistryURLs();
+
+        $data = self::getURLs($urls);
+
+        foreach ($data as $url => $registryData) {
+            $registry = registry::parse($url, $registryData);
+
+            $this->registries[$registry->type] = $registry;
+        }
+    }
+
+    /**
+     * update the IANA registries.
+     * this looks identical to loadRegistries() but will change once the
+     * registries use Openswoole tables.
+     */
+    private function updateRegistries() : void {
+        $urls = self::getRegistryURLs();
+
+        $data = self::getURLs($urls);
+
+        foreach ($data as $url => $registryData) {
+            $registry = registry::parse($url, $registryData);
+
+            $this->registries[$registry->type] = $registry;
+        }
     }
 
     /**
@@ -392,6 +448,50 @@ class server extends \OpenSwoole\HTTP\Server {
         $response->write(strval(json_encode(logger::stats())));
 
         return SELF::OK;
-    }   
+    }
 
+    /**
+     * do multiple parallel HTTP transfers
+     *
+     * @param string[] $urls
+     * @return array<string|null>
+     */
+    public static function getURLs(array $urls) : array {
+        $mh = curl_multi_init();
+
+        //
+        // create curl handlers for each URL and add them to the multi-handler
+        //
+        $handles = [];
+        foreach ($urls as $url) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            $handles[$url] = $ch;
+            curl_multi_add_handle($mh, $ch);
+        }
+
+        //
+        // execute the curl handles in parallel
+        //
+        do {
+            $status = curl_multi_exec($mh, $active);
+            if ($active) curl_multi_select($mh);
+        } while ($active && CURLM_OK == $status);
+
+        //
+        // extract response bodies from each curl handle
+        //
+        $data = [];
+
+        foreach ($handles as $url => $ch) {
+            $data[$url] = curl_multi_getcontent($ch);
+            curl_multi_remove_handle($mh, $ch);
+        }
+
+        curl_multi_close($mh);
+
+        return $data;
+    }
 }
