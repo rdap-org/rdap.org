@@ -283,7 +283,11 @@ class server extends \OpenSwoole\HTTP\Server {
             AF_INET     => 'ipv4',
             default     => throw new error("Bogus family for '{$ip}'"),
         };
-        return $this->registries->get($type)->search(fn($range) => $range->contains($ip));
+
+        return $this->registries->get($type)->search(function($range) use ($ip) {
+            $range = new ip($range);
+            return $range->contains($ip);
+        });
     }
 
     /**

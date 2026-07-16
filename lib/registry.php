@@ -149,8 +149,8 @@ class registry {
                     //
                     $resource = match($registry->type) {
                         'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
-                        'ipv4'  => new ip($resource),
-                        'ipv6'  => new ip($resource),
+                        'ipv4'  => (string)new ip($resource),
+                        'ipv6'  => (string)new ip($resource),
                         default => strtolower($resource),
                     };
 
