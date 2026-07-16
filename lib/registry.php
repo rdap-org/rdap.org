@@ -131,6 +131,9 @@ class registry {
 
         list($i, $j) = $registry->getArrayIndexes();
 
+        $resources  = [];
+        $urls       = [];
+
         foreach ($json->services as $service) {
             if (!is_array($service) || !is_array($service[$i])) continue;
 
@@ -154,13 +157,15 @@ class registry {
                         default => strtolower($resource),
                     };
 
-                    $registry->resources[]  = $resource;
-                    $registry->urls[]       = $url;
+                    $resources[]    = $resource;
+                    $urls[]         = $url;
                 }
             }
         }
 
-        $registry->updated = microtime(true);
+        $registry->resources    = $resources;
+        $registry->urls         = $urls;
+        $registry->updated      = microtime(true);
 
         return $registry;
     }
