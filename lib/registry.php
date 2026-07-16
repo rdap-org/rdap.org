@@ -102,7 +102,7 @@ class registry {
 
         list($i, $j) = $registry->getArrayIndexes();
 
-        $registry->rows = [];
+        $rows = [];
 
         foreach ($json->services as $service) {
             if (!is_array($service) || !is_array($service[$i])) continue;
@@ -129,12 +129,13 @@ class registry {
                         default => strtolower($resource),
                     };
 
-                    $registry->rows[] = [$resource, $url]; // @phpstan-ignore-line
+                    $rows[] = [$resource, $url];
                 }
             }
         }
 
-        $registry->updated = microtime(true);
+        $registry->rows     = $rows; // @phpstan-ignore-line
+        $registry->updated  = microtime(true);
 
         return $registry;
     }
