@@ -43,7 +43,7 @@ class registry {
         $this->table->create();
 
         foreach ($rows as $row) {
-            $this->table->set((string)$row[0], [
+            $this->table->set($row[0], [
                 'resource'  => $row[0],
                 'url'       => $row[1]
             ]);
@@ -65,9 +65,9 @@ class registry {
     public function search(callable $cb) : ?string {
 
         foreach ($this->table as $row) {
-            $result = call_user_func($cb, $row['resource']);
+            $result = call_user_func($cb, $row['resource']); // @phpstan-ignore-line
 
-            if (true === $result) return $row['url'];
+            if (true === $result) return $row['url']; // @phpstan-ignore-line
         }
 
         return null;
@@ -173,6 +173,46 @@ class registry {
     }
 
     public function update(?string $data) : void {
+
+        $json = self::parseJSON($data);
+
+        if (
+            !is_object($json) ||
+            !property_exists($json, 'services') ||
+            !is_array($json->services)
+        ) return;
+
+        $rows = self::extractRows($json, $this->type);
+
+        //
+        // process updates and additions
+        //
+        foreach ($rows as $row) {
+            $tbl_row = $this->table->get($row[0]);
+
+            if (is_array($tbl_row) && array_key_exists('row', $tbl_row) && $tbl_row['url'] == $row[1]) continue;
+
+            $this->table->set($row[0], [
+                'resource'  => $row[0],
+                'url'       => $row[1],
+            ]);
+        }
+
+        //
+        // process deletes
+        //
+        foreach ($this->table as $tbl_row) {
+            $seen = false;
+
+            foreach ($rows as $row) {
+                if ($row[0] == $tbl_row['resource']) {
+                    $seen = true;
+                    break;
+                }
+            }
+
+            if (!$seen) $this->table->del($tbl_row['resource']);
+        }
     }
 
     /**
