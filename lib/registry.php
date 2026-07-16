@@ -15,52 +15,24 @@ class registry {
     public readonly string $type;
 
     /**
+     * @var array<string[]>
+     */
+    private array $rows = [];
+
+    /**
      * when the registry was last updated (0 means never)
      */
     public float $updated = 0;
+
+    public function __construct(public readonly string $url) {
+        $this->type = self::typeFromURL($this->url);
+    }
 
     /**
      * get type from URL
      */
     public static function typeFromURL(string $url) : string {
         return basename($url, '.json');
-    }
-
-    public function __construct(
-        public readonly string $url,
-    ) {
-        $this->type = self::typeFromURL($this->url);
-    }
-
-    /**
-     * @var array<int, mixed>
-     */
-    private array $resources = [];
-
-    /**
-     * @var array<int, string>
-     */
-    private array $urls = [];
-
-    /**
-     * return the number of resources in this registry
-     */
-    private function count() : int {
-        return count($this->resources);
-    }
-
-    /**
-     * get the resource at position $i
-     */
-    private function getResource(int $i) : mixed {
-        return $this->resources[$i] ?? null;
-    }
-
-    /**
-     * get the URL for resource $i
-     */
-    private function getURL(int $i) : ?string {
-        return $this->urls[$i] ?? null;
     }
 
     /**
@@ -70,11 +42,10 @@ class registry {
      */
     public function search(callable $cb) : ?string {
 
-        for ($i = 0 ; $i < $this->count() ; $i++) {
+        foreach ($this->rows as $row) {
+            $result = call_user_func($cb, $row[0]);
 
-            $result = call_user_func($cb, $this->getResource($i));
-
-            if (true === $result) return $this->getURL($i);
+            if (true === $result) return $row[1];
         }
 
         return null;
@@ -131,22 +102,23 @@ class registry {
 
         list($i, $j) = $registry->getArrayIndexes();
 
-        $resources  = [];
-        $urls       = [];
+        $registry->rows = [];
 
         foreach ($json->services as $service) {
             if (!is_array($service) || !is_array($service[$i])) continue;
 
-            foreach ($service[$i] as $resource) {
-                if (!is_array($service[$j])) continue;
+            //
+            // all resources in this service are associated with the same URL.
+            //
+            // remove any trailing slashes from the URL (just so the URL
+            // construction in handleRequest() looks cleaner)
+            //
+            $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
 
-                //
-                // remove any trailing slashes from the URL (just so the URL
-                // construction in handleRequest() looks cleaner)
-                //
-                $url = preg_replace('/\/+$/', '', self::chooseURL($service[$j]));
+            if (is_string($url)) {
+                foreach ($service[$i] as $resource) {
+                    if (!is_array($service[$j])) continue;
 
-                if (is_string($url)) {
                     //
                     // coerce the resource into the appropriate type
                     //
@@ -157,15 +129,12 @@ class registry {
                         default => strtolower($resource),
                     };
 
-                    $resources[]    = $resource;
-                    $urls[]         = $url;
+                    $registry->rows[] = [$resource, $url]; // @phpstan-ignore-line
                 }
             }
         }
 
-        $registry->resources    = $resources;
-        $registry->urls         = $urls;
-        $registry->updated      = microtime(true);
+        $registry->updated = microtime(true);
 
         return $registry;
     }
