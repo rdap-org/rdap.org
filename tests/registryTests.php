@@ -52,7 +52,7 @@ class registryTests extends PHPUnit\Framework\TestCase {
             default     => throw new error("Bogus family for '{$ip}'"),
         };
 
-        $result = self::$registries->get($type)->search(fn($range) => $range->contains($ip));
+        $result = self::$registries->get($type)->search(fn($range) => new ip($range)->contains($ip));
 
         $this->assertIsString($result);
         $this->assertEquals($url, $result);
