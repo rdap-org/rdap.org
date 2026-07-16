@@ -265,6 +265,8 @@ class server extends \OpenSwoole\HTTP\Server {
      */
     private function autnum(int $autnum) : ?string {
         return $this->registries->get('asn')->search(function($range) use ($autnum) {
+            $range = array_map(fn($i) => intval($i), explode('-', $range, 2));
+
             if (1 == count($range)) {
                 return ($range[0] === $autnum);
 

@@ -138,7 +138,6 @@ class registry {
                     // coerce the resource into the appropriate type
                     //
                     $resource = match($type) {
-                        'asn'   => array_map(fn($i) => intval($i), explode('-', $resource, 2)),
                         'ipv4'  => (string)new ip($resource),
                         'ipv6'  => (string)new ip($resource),
                         default => strtolower($resource),
