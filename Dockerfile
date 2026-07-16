@@ -1,6 +1,4 @@
-FROM gbxyz/openswoole:php85-noble
-
-RUN apt -qqq --allow-releaseinfo-change update
+FROM gbxyz/openswoole:php85-resolute
 
 RUN apt -qqq install php8.5-redis
 
