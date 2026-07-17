@@ -21,17 +21,17 @@ class registryTests extends PHPUnit\Framework\TestCase {
             [ 'abc.xyz',            'https://rdap.centralnic.com/xyz'               ],
             [ 'verisign-grs.com',   'https://rdap.verisign.com/com/v1'              ],
             [ 'rdap.org',           'https://rdap.publicinterestregistry.org/rdap'  ],
-            [ 'bbc.co.uk',          'https://rdap.nominet.uk/uk'                    ]
+            [ 'bbc.co.uk',          'https://rdap.nominet.uk/uk'                    ],
+            [ 'invalid.invalid',    null                                            ]
         ];
     }
 
     #[DataProvider("domainTestData")]
-    public function testDomainRegistry(string $domain, string $url) : void {
+    public function testDomainRegistry(string $domain, ?string $url) : void {
 
         $result = self::$registries->get('dns')->search(fn($tld) => str_ends_with($domain, '.'.$tld));
 
-        $this->assertIsString($result);
-        $this->assertEquals($url, $result);
+        $this->assertTrue($url === $result);
     }
 
     public static function ipTestData() : array {
@@ -56,5 +56,40 @@ class registryTests extends PHPUnit\Framework\TestCase {
 
         $this->assertIsString($result);
         $this->assertEquals($url, $result);
+    }
+
+    public static function jsonParseData() : array {
+        return [
+            [ null,     false   ],
+            [ 'null',   false   ],
+            [ 'false',  false   ],
+            [ '',       false   ],
+            [ '[]',     false   ],
+            [ '{}',     true    ],
+        ];
+    }
+
+    #[DataProvider("jsonParseData")]
+    public function testJsonParse(?string $data, bool $success) : void {
+        $result = registry::parseJSON($data);
+        $this->assertTrue($success === is_object($result));
+    }
+
+    public static function parseData() : array {
+        return [
+            [ 'null',               false   ],
+            [ 'false',              false   ],
+            [ '',                   false   ],
+            [ '[]',                 false   ],
+            [ '{}',                 false   ],
+            [ '{"services":true}',  false   ],
+            [ '{"services":[]}',    true    ],
+        ];
+    }
+
+    #[DataProvider("parseData")]
+    public function testParse(?string $data, bool $success) : void {
+        $result = registry::parse('https://www.example.com/', $data);
+        $this->assertTrue($success === $result instanceof registry);
     }
 }
