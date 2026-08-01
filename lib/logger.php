@@ -88,6 +88,8 @@ class logger {
         static $types = ["entity", "nameserver", "domain", "ip", "autnum", "help", "domains", "nameservers", "entities", "ips", "autnums"];
 
         $segments = server::getPathSegments($request);
+        if (count($segments) < 1) return null;
+
         $type = strtolower((string)$segments[0]);
 
         return in_array($type, $types) ? $type : null;
