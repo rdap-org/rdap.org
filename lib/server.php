@@ -222,7 +222,16 @@ class server extends \OpenSwoole\HTTP\Server {
         //
         // no URL so we can't offer a redirect
         //
-        if (!$url) return self::NOT_FOUND;
+        if (!$url) {
+            $response->header('content-type', 'application/rdap+json');
+            $response->write(json_encode([
+                'rdapConformance'   => ['rdap_level_0'],
+                'lang'              => 'en',
+                'errorCode'         => 404,
+                'title'             => 'No RDAP service is available for this resource',
+            ]));
+            return self::NOT_FOUND;
+        }
 
         $response->header('location', $url);
 
